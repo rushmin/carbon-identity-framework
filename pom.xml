@@ -29,14 +29,7 @@
         <artifactId>wso2</artifactId>
         <version>1</version>
     </parent>
-
-    <scm>
-        <url>https://github.com/wso2/carbon-identity-framework.git</url>
-        <developerConnection>scm:git:https://github.com/wso2/carbon-identity-framework.git</developerConnection>
-        <connection>scm:git:https://github.com/wso2/carbon-identity-framework.git</connection>
-        <tag>v5.7.5</tag>
-    </scm>
-
+ 
     <modules>
         <module>service-stubs/identity</module>
         <module>components/authentication-framework</module>
@@ -1639,10 +1632,8 @@
 
 
         <maven.buildnumber.plugin.version>1.4</maven.buildnumber.plugin.version>
-
-        <project.scm.id>my-scm-server</project.scm.id>
-
-        <jersey-version>1.19.1</jersey-version>
+        
+	<jersey-version>1.19.1</jersey-version>
     </properties>
 
     <build>
@@ -1694,18 +1685,6 @@
         </pluginManagement>
 
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <configuration>
-                    <preparationGoals>clean install</preparationGoals>
-                    <autoVersionSubmodules>true</autoVersionSubmodules>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-            </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.1</version>

@@ -14,8 +14,8 @@ limitations under the License.
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 
-<suite name="SCIM2-Test-Suite">
-    <test name="SCIM2-tests" preserve-order="true" parallel="false">
+<suite name="Entitlement-Endpoint-Test-Suite">
+    <test name="Entitlement-Endpoint-tests" preserve-order="true" parallel="false">
         <classes>
             <class name="org.wso2.carbon.identity.entitlement.endpoint.test.TestJSONRequestParser"/>
             <class name="org.wso2.carbon.identity.entitlement.endpoint.test.TestJSONResponseWriter"/>

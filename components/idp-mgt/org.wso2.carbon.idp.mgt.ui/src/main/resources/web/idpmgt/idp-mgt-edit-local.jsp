@@ -55,10 +55,18 @@
     String DEFAULT = "DEFAULT";
     String cookie = (String) session.getAttribute(ServerConstants.ADMIN_SERVICE_COOKIE);
     String backendServerURL = CarbonUIUtil.getServerURL(config.getServletContext(), session);
+    final String governanceAdminServiceClass = "org.wso2.carbon.identity.governance.IdentityGovernanceAdminService";
     ConfigurationContext configContext = (ConfigurationContext) config.getServletContext()
             .getAttribute(CarbonConstants.CONFIGURATION_CONTEXT);
     IdentityGovernanceAdminClient client = new IdentityGovernanceAdminClient(cookie, backendServerURL, configContext);
-   Map<String, Map<String, List<ConnectorConfig>>> catMap = client.getConnectorList();
+    Map<String, Map<String, List<ConnectorConfig>>> catMap = null;
+    try {
+        Class.forName(governanceAdminServiceClass);
+        catMap = client.getConnectorList();
+    } catch( ClassNotFoundException e ) {
+        // Intentionally skipping handling the exception for class not found for admin service.
+    }
+
 
 %>
 
@@ -609,7 +617,7 @@ function idpMgtCancel(){
 
             		</div>
 
-<%
+<%      if (catMap != null) {
         for (String catName : catMap.keySet()) {
             if (DEFAULT.equals(catName)) {
                 for (ConnectorConfig connectorConfig : catMap.get(DEFAULT).get(DEFAULT)) {
@@ -805,6 +813,7 @@ function idpMgtCancel(){
 <%
             }
         }
+    }
 %>
 
 </form>

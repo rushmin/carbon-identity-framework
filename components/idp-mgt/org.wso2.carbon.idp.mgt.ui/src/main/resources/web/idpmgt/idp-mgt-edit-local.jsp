@@ -59,11 +59,12 @@
     ConfigurationContext configContext = (ConfigurationContext) config.getServletContext()
             .getAttribute(CarbonConstants.CONFIGURATION_CONTEXT);
     IdentityGovernanceAdminClient client = new IdentityGovernanceAdminClient(cookie, backendServerURL, configContext);
-    Map<String, Map<String, List<ConnectorConfig>>> catMap = null;
+    Map<String, Map<String, List<ConnectorConfig>>> catMap = new HashMap<String, Map<String, List<ConnectorConfig>>>();
     try {
         Class.forName(governanceAdminServiceClass);
         catMap = client.getConnectorList();
-    } catch( ClassNotFoundException e ) {
+    } catch (ClassNotFoundException e) {
+        // Fix APIMANAGER-5713 - issue due to removing jars of admin service
         // Intentionally skipping handling the exception for class not found for admin service.
     }
 
@@ -617,7 +618,7 @@ function idpMgtCancel(){
 
             		</div>
 
-<%      if (catMap != null) {
+<%
         for (String catName : catMap.keySet()) {
             if (DEFAULT.equals(catName)) {
                 for (ConnectorConfig connectorConfig : catMap.get(DEFAULT).get(DEFAULT)) {
@@ -812,7 +813,6 @@ function idpMgtCancel(){
             </div>
 <%
             }
-        }
     }
 %>
 

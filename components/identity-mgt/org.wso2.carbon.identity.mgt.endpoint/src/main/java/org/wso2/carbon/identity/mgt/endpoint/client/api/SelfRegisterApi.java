@@ -81,7 +81,7 @@ public class SelfRegisterApi {
     public String mePostCall(SelfUserRegistrationRequest user) throws ApiException {
 
         log.warn("This method no longer valid. Please use mePostCall(SelfUserRegistrationRequest user, Map<String, String> headers)");
-        
+
         return mePostCall(user, new HashMap<String, String>());
     }
 
@@ -118,11 +118,11 @@ public class SelfRegisterApi {
 
         List<Pair> localVarQueryParams = new ArrayList<Pair>();
 
-        if (headers == null) {
-            headers = new HashMap<>();
-        }
+        Map<String, String> localVarHeaderParams = new HashMap<>();
 
-        Map<String, String> localVarHeaderParams = headers;
+        if (headers != null && !headers.isEmpty()) {
+            localVarHeaderParams.putAll(headers);
+        }
 
         Map<String, Object> localVarFormParams = new HashMap<String, Object>();
 

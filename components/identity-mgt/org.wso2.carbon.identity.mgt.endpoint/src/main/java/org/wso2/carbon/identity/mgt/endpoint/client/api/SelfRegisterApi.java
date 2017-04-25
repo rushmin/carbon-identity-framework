@@ -26,6 +26,8 @@
 package org.wso2.carbon.identity.mgt.endpoint.client.api;
 
 import com.sun.jersey.api.client.GenericType;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.commons.lang.StringUtils;
 import org.wso2.carbon.base.MultitenantConstants;
 import org.wso2.carbon.identity.mgt.endpoint.IdentityManagementEndpointConstants;
@@ -44,6 +46,8 @@ import java.util.List;
 import java.util.Map;
 
 public class SelfRegisterApi {
+
+    private static final Log log = LogFactory.getLog(SelfRegisterApi.class);
 
     String basePath = IdentityManagementServiceUtil.getInstance().getServiceContextURL()
             .replace(IdentityManagementEndpointConstants.UserInfoRecovery.SERVICE_CONTEXT_URL_DOMAIN,
@@ -73,7 +77,23 @@ public class SelfRegisterApi {
      * @return String
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      */
+    @Deprecated
     public String mePostCall(SelfUserRegistrationRequest user) throws ApiException {
+
+        log.warn("This method no longer valid. Please use mePostCall(SelfUserRegistrationRequest user, Map<String, String> headers)");
+
+        return mePostCall(user, new HashMap<String, String>());
+    }
+
+    /**
+     * This API is used to user self registration.
+     *
+     * @param user It can be sent optional property parameters over email based on email template. (required)
+     * @param headers It can be used to send reCAPCHA header parameters.
+     * @return String
+     * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
+     */
+    public String mePostCall(SelfUserRegistrationRequest user, Map<String, String> headers) throws ApiException {
         Object localVarPostBody = user;
 
         // verify the required parameter 'user' is set
@@ -98,7 +118,11 @@ public class SelfRegisterApi {
 
         List<Pair> localVarQueryParams = new ArrayList<Pair>();
 
-        Map<String, String> localVarHeaderParams = new HashMap<String, String>();
+        Map<String, String> localVarHeaderParams = new HashMap<>();
+
+        if (headers != null && !headers.isEmpty()) {
+            localVarHeaderParams.putAll(headers);
+        }
 
         Map<String, Object> localVarFormParams = new HashMap<String, Object>();
 

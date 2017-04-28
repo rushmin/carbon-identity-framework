@@ -41,6 +41,7 @@ public class PolicyCache extends EntitlementBaseCache<IdentityCacheKey, PolicySt
     private static Log log = LogFactory.getLog(PolicyCache.class);
     private static final Object lock = new Object();
     private int myHashCode;
+    private static final int INVALID_STATE = 1;
     private static Map<Integer,Integer> cacheInvalidationState = new HashMap<Integer, Integer>();
     private static Map<Integer,Map<String,PolicyStatus>> localPolicyCacheMap = new HashMap<Integer,Map<String,PolicyStatus>>();
 
@@ -115,7 +116,7 @@ public class PolicyCache extends EntitlementBaseCache<IdentityCacheKey, PolicySt
 
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
         if (log.isDebugEnabled()) {
-            log.debug("Trigger invalidateCache to tenant :  " + tenantId + " and all policy ");
+            log.debug("Trigger invalidatePolicyCache to tenant :  " + tenantId + " and all policy ");
         }
 
         IdentityCacheKey cacheKey = new IdentityCacheKey(tenantId, "");
@@ -138,30 +139,34 @@ public class PolicyCache extends EntitlementBaseCache<IdentityCacheKey, PolicySt
      *
      * @return
      */
-    public boolean isInvalidate(){
+    public boolean isInvalidate() {
 
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
-        int state = 0 ;
+        int state = 0;
 
         synchronized (cacheInvalidationState) {
-            if(cacheInvalidationState.get(tenantId)!=null) {
+            if (cacheInvalidationState.get(tenantId) != null) {
                 state = cacheInvalidationState.get(tenantId);
+            } else {
+                // we ignore the case where the cache invalidation state is not present.This means the cache is valid.
             }
-
-            cacheInvalidationState.put(tenantId,0);
-        }
-        if(log.isDebugEnabled()){
-            log.debug("Check the invalidation state of all cache : " + state);
         }
 
-        if(state==1){
-            return true ;
-        }else{
-            return false ;
+        boolean isInvalid = (state == INVALID_STATE);
+        if (log.isDebugEnabled()) {
+            log.debug("Check the invalidation state of all cache, isCacheInvalid: " + isInvalid);
         }
 
+        return isInvalid;
     }
 
+    public void resetCacheInvalidateState() {
+
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+
+        // since the cache is invalidated already making cacheInvalidationState to '0'
+        cacheInvalidationState.put(tenantId, 0);
+    }
 
     /**
      *
@@ -174,8 +179,8 @@ public class PolicyCache extends EntitlementBaseCache<IdentityCacheKey, PolicySt
 
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
 
-        if(log.isDebugEnabled()){
-            log.debug("Trigger invalidateCache to tenant :  " + tenantId + " and policy " + policyId + " for  action " +
+        if (log.isDebugEnabled()) {
+            log.debug("Trigger invalidatePolicyCache to tenant :  " + tenantId + " and policy " + policyId + " for  action " +
                     ": " + action);
         }
 

@@ -96,11 +96,11 @@ public class EntitlementEngine {
 
     private static Log log = LogFactory.getLog(EntitlementEngine.class);
 
-
     public PolicyCache getPolicyCache() {
         return policyCache;
     }
 
+    @Deprecated
     public void setPolicyCache(PolicyCache policyCache) {
         this.policyCache = policyCache;
     }
@@ -645,4 +645,27 @@ public class EntitlementEngine {
 
     }
 
+    /**
+     * Check reset cache state
+     */
+    public void resetCacheInvalidateState() {
+
+        if (policyCache != null) {
+            policyCache.resetCacheInvalidateState();
+        } else {
+            log.error("Policy cache is null - Unable to reset cache invalidate state.");
+        }
+    }
+
+    /**
+     * Checking the policy cache status before cache invalidation
+     */
+    public void invalidatePolicyCache() {
+
+        if (policyCache != null) {
+            policyCache.invalidateCache();
+        } else {
+            log.error("Policy cache is null - Unable to invalidate cache.");
+        }
+    }
 }

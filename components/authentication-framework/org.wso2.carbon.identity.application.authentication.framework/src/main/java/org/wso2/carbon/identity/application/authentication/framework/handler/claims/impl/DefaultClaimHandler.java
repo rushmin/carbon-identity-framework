@@ -321,12 +321,11 @@ public class DefaultClaimHandler implements ClaimHandler {
      */
     private static String getServiceProviderMappedUserRoles(ApplicationConfig applicationConfig,
             List<String> locallyMappedUserRoles, String claimSeparator) throws FrameworkException {
-        if (CollectionUtils.isNotEmpty(locallyMappedUserRoles)) {
 
             Map<String, String> localToSpRoleMapping = applicationConfig.getRoleMappings();
 
             if (MapUtils.isEmpty(localToSpRoleMapping)) {
-                return null;
+                return StringUtils.join(locallyMappedUserRoles, ",");
             }
 
             StringBuilder spMappedUserRoles = new StringBuilder();
@@ -341,12 +340,7 @@ public class DefaultClaimHandler implements ClaimHandler {
                 spMappedUserRoles.append(remainingRole).append(claimSeparator);
             }
 
-            return spMappedUserRoles.length() > 0 ?
-                    spMappedUserRoles.toString().substring(0, spMappedUserRoles.length() - 1) :
-                    null;
-        }
-
-        return null;
+        return spMappedUserRoles.toString().substring(0, spMappedUserRoles.length() - 1);
     }
 
     /**

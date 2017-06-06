@@ -79,6 +79,8 @@ public class IdentityMgtServiceComponent {
 
     private static RealmService realmService;
 
+    private static final String EMAIL_TEMPLATE_PATH = "identity/config/emailTemplate";
+
     private static RegistryService registryService;
 
     private static ConfigurationContextService configurationContextService;
@@ -136,7 +138,7 @@ public class IdentityMgtServiceComponent {
                     (UserOperationEventListener.class.getName(), IdentityMgtEventListener.class.getName());
 
             if (identityEventListenerConfig != null) {
-                if (Boolean.parseBoolean(identityEventListenerConfig.getEnable())) {
+                if (Boolean.parseBoolean(identityEventListenerConfig.getEnable()) && !registry.resourceExists(EMAIL_TEMPLATE_PATH)) {
                     Config emailConfigFile = ConfigBuilder.getInstance().loadEmailConfigFile();
                     EmailNotificationConfig emailNotificationConfig = new EmailNotificationConfig();
                     emailNotificationConfig.setProperties(emailConfigFile.getProperties());

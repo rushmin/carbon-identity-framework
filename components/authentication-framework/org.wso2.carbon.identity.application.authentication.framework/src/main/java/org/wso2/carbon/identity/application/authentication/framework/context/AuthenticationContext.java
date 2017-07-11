@@ -63,6 +63,7 @@ public class AuthenticationContext extends MessageContext implements Serializabl
     private boolean reAuthenticate;
     private boolean passiveAuthenticate;
     private boolean previousAuthTime;
+
     private AuthenticationRequest authenticationRequest;
 
     private Map<String, AuthenticatedIdPData> previousAuthenticatedIdPs = new HashMap<String, AuthenticatedIdPData>();

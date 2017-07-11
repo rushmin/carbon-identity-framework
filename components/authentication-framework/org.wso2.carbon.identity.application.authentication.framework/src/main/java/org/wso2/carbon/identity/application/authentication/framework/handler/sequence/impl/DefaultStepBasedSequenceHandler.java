@@ -126,11 +126,13 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
                         log.debug("Authentication has failed in the Step "
                                 + (context.getCurrentStep()));
                     }
-                    boolean isDisableRetryOnFIDPasParameter =
-                            Boolean.parseBoolean(IdentityUtil.
+                    boolean isDisableRetryOnFIDPasParameter = Boolean.parseBoolean(IdentityUtil.
                                     getProperty(FrameworkConstants.DISABLE_RETRY_ON_FIDP_AS_PARAM));
-                    boolean isFIDPParamInFirstStep = (boolean)
-                            context.getProperty(FrameworkConstants.IS_FIDP_PARAM_IN_FIREST_REQURST);
+                    boolean isFIDPParamInFirstStep = false;
+                    if (context.getProperty(FrameworkConstants.IS_FIDP_PARAM_IN_FIREST_REQURST) != null) {
+                        isFIDPParamInFirstStep = Boolean.parseBoolean(context.getProperty(FrameworkConstants
+                                .IS_FIDP_PARAM_IN_FIREST_REQURST).toString());
+                    }
                     boolean skipMultiOptionStep = false;
                     // if the step contains multiple login options, we should give the user to retry
                     // authentication

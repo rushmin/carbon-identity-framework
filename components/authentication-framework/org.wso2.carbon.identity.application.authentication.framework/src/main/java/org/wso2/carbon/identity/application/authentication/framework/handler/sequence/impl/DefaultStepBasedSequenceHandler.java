@@ -129,7 +129,8 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
                     boolean isDisableRetryOnFIDPasParameter =
                             Boolean.parseBoolean(IdentityUtil.
                                     getProperty(FrameworkConstants.DISABLE_RETRY_ON_FIDP_AS_PARAM));
-                    boolean isFIDPParamInFirstStep = context.isFidcParamSetInFirstRequest();
+                    boolean isFIDPParamInFirstStep = (boolean)
+                            context.getProperty(FrameworkConstants.IS_FIDP_PARAM_IN_FIREST_REQURST);
                     boolean skipMultiOptionStep = false;
                     // if the step contains multiple login options, we should give the user to retry
                     // authentication

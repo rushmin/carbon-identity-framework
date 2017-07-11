@@ -85,7 +85,8 @@ public abstract class AbstractApplicationAuthenticator implements ApplicationAut
                 } catch (AuthenticationFailedException e) {
                     Map<Integer, StepConfig> stepMap = context.getSequenceConfig().getStepMap();
                     boolean stepHasMultiOption = false;
-                    boolean isFIDPParamInFirstStep = context.isFidcParamSetInFirstRequest();
+                    boolean isFIDPParamInFirstStep = (boolean)
+                            context.getProperty(FrameworkConstants.IS_FIDP_PARAM_IN_FIREST_REQURST);
                     boolean isDisableRetryOnFIDPasParameter =
                             Boolean.parseBoolean(IdentityUtil.
                                     getProperty(FrameworkConstants.DISABLE_RETRY_ON_FIDP_AS_PARAM));

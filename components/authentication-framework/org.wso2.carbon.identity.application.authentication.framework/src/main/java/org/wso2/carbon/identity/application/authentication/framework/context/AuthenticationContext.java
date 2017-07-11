@@ -64,7 +64,6 @@ public class AuthenticationContext extends MessageContext implements Serializabl
     private boolean passiveAuthenticate;
     private boolean previousAuthTime;
 
-    private boolean fidcParamSetInFirstRequest;
     private AuthenticationRequest authenticationRequest;
 
     private Map<String, AuthenticatedIdPData> previousAuthenticatedIdPs = new HashMap<String, AuthenticatedIdPData>();
@@ -362,13 +361,5 @@ public class AuthenticationContext extends MessageContext implements Serializabl
 
     public void setPreviousAuthTime(boolean previousAuthTime) {
         this.previousAuthTime = previousAuthTime;
-    }
-
-    public boolean isFidcParamSetInFirstRequest() {
-        return fidcParamSetInFirstRequest;
-    }
-
-    public void setFidcParamSetInFirstRequest(boolean fidcParamSetInFirstRequest) {
-        this.fidcParamSetInFirstRequest = fidcParamSetInFirstRequest;
     }
 }

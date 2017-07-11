@@ -86,7 +86,7 @@ public abstract class AbstractApplicationAuthenticator implements ApplicationAut
                 } catch (AuthenticationFailedException e) {
                     Map<Integer, StepConfig> stepMap = context.getSequenceConfig().getStepMap();
                     boolean stepHasMultiOption = false;
-                    boolean isFIDCPAramInFirstStep = context.isFidcParamSetInFirstRequest();
+                    boolean isFIDPParamInFirstStep = context.isFidcParamSetInFirstRequest();
                     boolean isDisableRetryOnFIDPasParameter =
                             Boolean.parseBoolean(IdentityUtil.
                                     getProperty(FrameworkConstants.DISABLE_RETRY_ON_FIDP_AS_PARAM));
@@ -99,16 +99,19 @@ public abstract class AbstractApplicationAuthenticator implements ApplicationAut
                             stepHasMultiOption = stepConfig.isMultiOption();
                         }
                     }
+                    boolean skipMultiOptionStep = false;
+                    // if the step contains multiple login options, we should give the user to retry
+                    // authentication
 
-                    if (retryAuthenticationEnabled() && !stepHasMultiOption && !isFIDCPAramInFirstStep) {
-                        if (isFIDCPAramInFirstStep && isDisableRetryOnFIDPasParameter) {
-                            throw e;
-                        } else {
-                            context.setRetrying(true);
-                            context.setCurrentAuthenticator(getName());
-                            initiateAuthenticationRequest(request, response, context);
-                            return AuthenticatorFlowStatus.INCOMPLETE;
-                        }
+                    if (isFIDPParamInFirstStep && isDisableRetryOnFIDPasParameter) {
+                        skipMultiOptionStep = true;
+                    }
+
+                    if (retryAuthenticationEnabled() && !stepHasMultiOption && !skipMultiOptionStep) {
+                        context.setRetrying(true);
+                        context.setCurrentAuthenticator(getName());
+                        initiateAuthenticationRequest(request, response, context);
+                        return AuthenticatorFlowStatus.INCOMPLETE;
                     } else {
                         throw e;
                     }

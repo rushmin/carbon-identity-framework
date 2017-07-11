@@ -22,7 +22,6 @@ import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authentication.framework.FederatedApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authentication.framework.config.ConfigurationFacade;
@@ -41,6 +40,7 @@ import org.wso2.carbon.identity.application.common.model.ClaimMapping;
 import org.wso2.carbon.identity.application.common.model.ThreadLocalProvisioningServiceProvider;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
 import org.wso2.carbon.identity.application.mgt.ApplicationConstants;
+import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.user.profile.mgt.UserProfileAdmin;
 import org.wso2.carbon.identity.user.profile.mgt.UserProfileException;
 import org.wso2.carbon.idp.mgt.IdentityProviderManagementException;
@@ -113,7 +113,7 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
                 if (context.isRequestAuthenticated()) {
                     if (log.isDebugEnabled()) {
                         log.debug("Step " + stepConfig.getOrder()
-                                + " is completed. Going to get the next one.");
+                                  + " is completed. Going to get the next one.");
                     }
 
                     currentStep = context.getCurrentStep() + 1;
@@ -124,12 +124,21 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
 
                     if (log.isDebugEnabled()) {
                         log.debug("Authentication has failed in the Step "
-                                + (context.getCurrentStep()));
+                                  + (context.getCurrentStep()));
                     }
-
+                    boolean isDisableRetryOnFIDPasParameter =
+                            Boolean.parseBoolean(IdentityUtil.
+                                    getProperty(FrameworkConstants.DISABLE_RETRY_ON_FIDP_AS_PARAM));
+                    boolean isFIDPPAramInFirstStep = context.isFidcParamSetInFirstRequest();
+                    boolean skipMultiOptionStep = false;
                     // if the step contains multiple login options, we should give the user to retry
                     // authentication
-                    if (stepConfig.isMultiOption() && !context.isPassiveAuthenticate()) {
+
+                    if (isFIDPPAramInFirstStep && isDisableRetryOnFIDPasParameter ) {
+                        skipMultiOptionStep=true;
+                    }
+
+                    if (stepConfig.isMultiOption() && !context.isPassiveAuthenticate() && !skipMultiOptionStep) {
                         stepConfig.setRetrying(true);
                         context.setRequestAuthenticated(true);
                     } else {
@@ -248,7 +257,7 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
                 try {
                     externalIdPConfig = ConfigurationFacade.getInstance()
                             .getIdPConfigByName(stepConfig.getAuthenticatedIdP(),
-                                    context.getTenantDomain());
+                                                context.getTenantDomain());
                 } catch (IdentityProviderManagementException e) {
                     log.error("Exception while getting IdP by name", e);
                 }
@@ -291,12 +300,12 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
                             // start tenant flow
                             FrameworkUtils.startTenantFlow(context.getTenantDomain());
                             associatedID = userProfileAdmin.getNameAssociatedWith(stepConfig.getAuthenticatedIdP(),
-                                    originalExternalIdpSubjectValueForThisStep);
+                                                                                  originalExternalIdpSubjectValueForThisStep);
                             if (StringUtils.isNotBlank(associatedID)) {
                                 if (log.isDebugEnabled()) {
                                     log.debug("User " + stepConfig.getAuthenticatedUser() +
-                                            " has an associated account as " + associatedID + ". Hence continuing as " +
-                                            associatedID);
+                                              " has an associated account as " + associatedID + ". Hence continuing as " +
+                                              associatedID);
                                 }
                                 stepConfig.getAuthenticatedUser().setUserName(associatedID);
                                 stepConfig.getAuthenticatedUser().setTenantDomain(context.getTenantDomain());
@@ -304,13 +313,13 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
                             } else {
                                 if (log.isDebugEnabled()) {
                                     log.debug("User " + stepConfig.getAuthenticatedUser() +
-                                            " doesn't have an associated" +
-                                            " account. Hence continuing as the same user.");
+                                              " doesn't have an associated" +
+                                              " account. Hence continuing as the same user.");
                                 }
                             }
                         } catch (UserProfileException e) {
                             throw new FrameworkException("Error while getting associated local user ID for "
-                                    + originalExternalIdpSubjectValueForThisStep, e);
+                                                         + originalExternalIdpSubjectValueForThisStep, e);
                         } finally {
                             // end tenant flow
                             FrameworkUtils.endTenantFlow();
@@ -331,8 +340,8 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
                         String fullQualifiedAssociatedUserId = FrameworkUtils.prependUserStoreDomainToName(
                                 associatedID + UserCoreConstants.TENANT_DOMAIN_COMBINER + context.getTenantDomain());
                         sequenceConfig.setAuthenticatedUser(AuthenticatedUser
-                                .createLocalAuthenticatedUserFromSubjectIdentifier(
-                                        fullQualifiedAssociatedUserId));
+                                                                    .createLocalAuthenticatedUserFromSubjectIdentifier(
+                                                                            fullQualifiedAssociatedUserId));
 
                         sequenceConfig.getApplicationConfig().setMappedSubjectIDSelected(true);
 
@@ -342,8 +351,8 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
 
                         // if no requested claims are selected, send all local mapped claim values or idp claim values
                         if (context.getSequenceConfig().getApplicationConfig().getRequestedClaimMappings() == null ||
-                                context.getSequenceConfig().getApplicationConfig().getRequestedClaimMappings()
-                                        .isEmpty()) {
+                            context.getSequenceConfig().getApplicationConfig().getRequestedClaimMappings()
+                                    .isEmpty()) {
 
                             if (MapUtils.isNotEmpty(localClaimValues)) {
                                 mappedAttrs = localClaimValues;
@@ -368,7 +377,7 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
 
                         if (log.isDebugEnabled()) {
                             log.debug("Authenticated User: " +
-                                    sequenceConfig.getAuthenticatedUser().getAuthenticatedSubjectIdentifier());
+                                      sequenceConfig.getAuthenticatedUser().getAuthenticatedSubjectIdentifier());
                             log.debug("Authenticated User Tenant Domain: " + tenantDomain);
                         }
 
@@ -390,18 +399,18 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
                     String idpRoleClaimUri = getIdpRoleClaimUri(externalIdPConfig);
 
                     locallyMappedUserRoles = getLocallyMappedUserRoles(sequenceConfig,
-                            externalIdPConfig, extAttibutesValueMap, idpRoleClaimUri);
+                                                                       externalIdPConfig, extAttibutesValueMap, idpRoleClaimUri);
 
                     if (idpRoleClaimUri != null && getServiceProviderMappedUserRoles(sequenceConfig,
-                            locallyMappedUserRoles) != null) {
+                                                                                     locallyMappedUserRoles) != null) {
                         extAttibutesValueMap.put(idpRoleClaimUri, getServiceProviderMappedUserRoles(sequenceConfig,
-                                locallyMappedUserRoles));
+                                                                                                    locallyMappedUserRoles));
                     }
 
                     if (mappedAttrs == null || mappedAttrs.isEmpty()) {
                         // do claim handling
                         mappedAttrs = handleClaimMappings(stepConfig, context,
-                                extAttibutesValueMap, true);
+                                                          extAttibutesValueMap, true);
                         // external claim values mapped to local claim uris.
                         localClaimValues = (Map<String, String>) context
                                 .getProperty(FrameworkConstants.UNFILTERED_LOCAL_CLAIM_VALUES);
@@ -416,7 +425,7 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
 
                         // if no requested claims are selected, send all local mapped claim values or idp claim values
                         if (context.getSequenceConfig().getApplicationConfig().getRequestedClaimMappings() == null ||
-                                context.getSequenceConfig().getApplicationConfig().getRequestedClaimMappings().isEmpty()) {
+                            context.getSequenceConfig().getApplicationConfig().getRequestedClaimMappings().isEmpty()) {
 
                             if (MapUtils.isNotEmpty(localClaimValues)) {
                                 mappedAttrs = localClaimValues;
@@ -438,7 +447,7 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
                     }
 
                     handleJitProvisioning(originalExternalIdpSubjectValueForThisStep, context,
-                            locallyMappedUserRoles, localClaimValues);
+                                          locallyMappedUserRoles, localClaimValues);
                 }
 
             } else {
@@ -469,7 +478,7 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
                         mappedAttrs.put(
                                 spRoleUri,
                                 getServiceProviderMappedUserRoles(sequenceConfig,
-                                        Arrays.asList(roles)));
+                                                                  Arrays.asList(roles)));
                     }
 
                     authenticatedUserAttributes = FrameworkUtils.buildClaimMappings(mappedAttrs);
@@ -487,20 +496,20 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
                 // append it.
                 if (sequenceConfig.getApplicationConfig().isUseTenantDomainInLocalSubjectIdentifier()) {
                     sequenceConfig.getAuthenticatedUser().setAuthenticatedSubjectIdentifier(UserCoreUtil
-                            .addTenantDomainToEntry(subjectValue, sequenceConfig.getAuthenticatedUser()
-                                    .getTenantDomain()));
+                                                                                                    .addTenantDomainToEntry(subjectValue, sequenceConfig.getAuthenticatedUser()
+                                                                                                            .getTenantDomain()));
                 }
 
                 // Check whether the user store domain should be appended to the subject identifier for this SP and
                 // if yes, append it.
                 if (sequenceConfig.getApplicationConfig().isUseUserstoreDomainInLocalSubjectIdentifier()) {
                     sequenceConfig.getAuthenticatedUser().setAuthenticatedSubjectIdentifier(UserCoreUtil
-                            .addDomainToName(subjectValue, sequenceConfig.getAuthenticatedUser().getUserStoreDomain()));
+                                                                                                    .addDomainToName(subjectValue, sequenceConfig.getAuthenticatedUser().getUserStoreDomain()));
                 }
 
                 if (log.isDebugEnabled()) {
                     log.debug("Authenticated User: " +
-                            sequenceConfig.getAuthenticatedUser().getAuthenticatedSubjectIdentifier());
+                              sequenceConfig.getAuthenticatedUser().getAuthenticatedSubjectIdentifier());
                     log.debug("Authenticated User Tenant Domain: " + sequenceConfig.getAuthenticatedUser()
                             .getTenantDomain());
                 }
@@ -508,17 +517,17 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
                 log.warn("Subject claim could not be found. Defaulting to Name Identifier.");
                 if (StringUtils.isNotBlank(sequenceConfig.getAuthenticatedUser().getUserName())) {
                     sequenceConfig.getAuthenticatedUser().setAuthenticatedSubjectIdentifier(sequenceConfig
-                            .getAuthenticatedUser().getUsernameAsSubjectIdentifier(sequenceConfig.getApplicationConfig()
-                                    .isUseUserstoreDomainInLocalSubjectIdentifier(), sequenceConfig
-                                    .getApplicationConfig().isUseTenantDomainInLocalSubjectIdentifier()));
+                                                                                                    .getAuthenticatedUser().getUsernameAsSubjectIdentifier(sequenceConfig.getApplicationConfig()
+                                                                                                                                                                   .isUseUserstoreDomainInLocalSubjectIdentifier(), sequenceConfig
+                                                                                                                                                                   .getApplicationConfig().isUseTenantDomainInLocalSubjectIdentifier()));
                 }
             }
 
         } else {
             if (StringUtils.isNotBlank(sequenceConfig.getAuthenticatedUser().getUserName())) {
                 sequenceConfig.getAuthenticatedUser().setAuthenticatedSubjectIdentifier(sequenceConfig
-                        .getAuthenticatedUser().getUsernameAsSubjectIdentifier(sequenceConfig.getApplicationConfig()
-                                .isUseUserstoreDomainInLocalSubjectIdentifier(), sequenceConfig.getApplicationConfig
+                                                                                                .getAuthenticatedUser().getUsernameAsSubjectIdentifier(sequenceConfig.getApplicationConfig()
+                                                                                                                                                               .isUseUserstoreDomainInLocalSubjectIdentifier(), sequenceConfig.getApplicationConfig
                                 ().isUseTenantDomainInLocalSubjectIdentifier()));
             }
 
@@ -704,7 +713,7 @@ public class DefaultStepBasedSequenceHandler implements StepBasedSequenceHandler
         } catch (FrameworkException e) {
             log.error("Claim handling failed!", e);
         }
-        if(mappedAttrs == null){
+        if (mappedAttrs == null) {
             mappedAttrs = new HashMap<>();
         }
         return mappedAttrs;

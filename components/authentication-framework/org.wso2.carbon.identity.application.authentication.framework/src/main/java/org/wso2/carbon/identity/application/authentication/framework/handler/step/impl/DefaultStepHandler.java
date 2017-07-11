@@ -130,6 +130,7 @@ public class DefaultStepHandler implements StepHandler {
 
         // if Request has fidp param and if this is the first step
         if (fidp != null && stepConfig.getOrder() == 1) {
+            context.setFidcParamSetInFirstRequest(true);
             handleHomeRealmDiscovery(request, response, context);
             return;
         } else if (context.isReturning()) {

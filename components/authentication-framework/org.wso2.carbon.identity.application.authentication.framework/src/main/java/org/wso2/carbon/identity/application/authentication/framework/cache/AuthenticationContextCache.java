@@ -90,6 +90,8 @@ public class AuthenticationContextCache extends
                     Map.Entry<String, Object> item =  (Map.Entry<String, Object>) it.next();
                     if (!(item.getValue() instanceof Serializable)) {
                         it.remove();
+                        log.warn("Removing a non-serializable property : " + item.getKey() +
+                                " from authentication context.");
                     }
                 }
                 SessionDataStore.getInstance().storeSessionData(key.getContextId(), AUTHENTICATION_CONTEXT_CACHE_NAME,

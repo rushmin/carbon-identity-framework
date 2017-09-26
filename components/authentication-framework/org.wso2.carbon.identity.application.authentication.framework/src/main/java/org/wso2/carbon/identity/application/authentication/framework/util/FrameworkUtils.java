@@ -457,14 +457,22 @@ public class FrameworkUtils {
      */
     public static PostAuthenticationHandler getPostAuthenticationHandler() {
 
-        PostAuthenticationHandler postAuthenticationHandler = null;
-        Object obj = ConfigurationFacade.getInstance().getExtensions()
-                .get(FrameworkConstants.Config.QNAME_EXT_AUTHORIZATION_HANDLER);
+        PostAuthenticationHandler postAuthenticationHandler;
+        Object obj = ConfigurationFacade.getInstance().getExtensions().get(FrameworkConstants.Config
+                                                                                   .QNAME_EXT_AUTHORIZATION_HANDLER);
 
         if (obj instanceof PostAuthenticationHandler) {
             postAuthenticationHandler = (PostAuthenticationHandler) obj;
         } else {
-            postAuthenticationHandler = DefaultPostAuthenticationHandler.getInstance();
+            // Giving the priority to 'AuthorizationHandler' and then to 'PostAuthenticationHandler' config to
+            // preserve backward compatibility.
+            obj = ConfigurationFacade.getInstance().getExtensions().get(FrameworkConstants.Config
+                                                                                .QNAME_EXT_POST_AUTHENTICATION_HANDLER);
+            if (obj instanceof PostAuthenticationHandler) {
+                postAuthenticationHandler = (PostAuthenticationHandler) obj;
+            } else {
+                postAuthenticationHandler = DefaultPostAuthenticationHandler.getInstance();
+            }
         }
         return postAuthenticationHandler;
     }

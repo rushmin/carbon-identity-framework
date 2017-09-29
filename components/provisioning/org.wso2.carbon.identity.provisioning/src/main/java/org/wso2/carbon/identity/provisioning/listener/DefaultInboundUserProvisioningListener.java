@@ -214,6 +214,10 @@ public class DefaultInboundUserProvisioningListener extends AbstractIdentityUser
     public boolean doPreDeleteUserClaimValues(String userName, String[] attributesToDelete,
                                               String profileName, UserStoreManager userStoreManager) throws UserStoreException {
 
+        if (!isEnable()) {
+            return true;
+        }
+
         Map<ClaimMapping, List<String>> outboundAttributes = new HashMap<>();
 
         if (userName != null) {
@@ -279,6 +283,10 @@ public class DefaultInboundUserProvisioningListener extends AbstractIdentityUser
     @Override
     public boolean doPreDeleteUserClaimValue(String userName, String attributeToDelete, String profileName,
                                              UserStoreManager userStoreManager) throws UserStoreException {
+
+        if (!isEnable()) {
+            return true;
+        }
 
         Map<ClaimMapping, List<String>> outboundAttributes = new HashMap<>();
 
@@ -701,6 +709,10 @@ public class DefaultInboundUserProvisioningListener extends AbstractIdentityUser
     public boolean doPostUpdateCredential(String userName, Object credential, UserStoreManager userStoreManager)
             throws UserStoreException {
 
+        if (!isEnable()) {
+            return true;
+        }
+
         Map<ClaimMapping, List<String>> outboundAttributes = new HashMap<ClaimMapping, List<String>>();
 
         if (credential != null) {
@@ -764,6 +776,11 @@ public class DefaultInboundUserProvisioningListener extends AbstractIdentityUser
     @Override
     public boolean doPostUpdateCredentialByAdmin(String userName, Object credential, UserStoreManager userStoreManager)
             throws UserStoreException {
+
+        if (!isEnable()) {
+            return true;
+        }
+
         return doPostUpdateCredential(userName, credential, userStoreManager);
     }
 }

@@ -451,7 +451,7 @@ function postbackUpdatedPolicy() {
     var endpoint = parts[0];
     formEl.setAttribute("action", endpoint);
 
-    var formContentHTML = "";
+    var formContentHTML = "<input type='hidden' name='" + tName + "' value='" + tValue + "'/>";
 
     if (parts.length > 1) {
         var params = parts[1].split("&");

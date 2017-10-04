@@ -60,6 +60,8 @@ public class IdPManagementUIUtil {
 
     private static final String META_DATA_SAML = "meta_data_saml";
 
+    public static final String RESPONSE_AUTHN_CONTEXT_CLASS_REF = "ResponseAuthnContextClassRef";
+
     /**
      * Validates an URI.
      *
@@ -1418,7 +1420,7 @@ public class IdPManagementUIUtil {
         if ("on".equals(paramMap.get("saml2SSODefault"))) {
             fedIdp.setDefaultAuthenticatorConfig(saml2SSOAuthnConfig);
         }
-        Property[] properties  = new Property[25];
+        Property[] properties  = new Property[26];
 
         if ("on".equals(paramMap.get("saml2SSOEnabled"))) {
             saml2SSOAuthnConfig.setEnabled(true);
@@ -1617,6 +1619,11 @@ public class IdPManagementUIUtil {
             property.setValue(null);
         }
         properties[24] = property;
+
+        property = new Property();
+        property.setName(RESPONSE_AUTHN_CONTEXT_CLASS_REF);
+        property.setValue(paramMap.get(RESPONSE_AUTHN_CONTEXT_CLASS_REF));
+        properties[25] = property;
 
 
         saml2SSOAuthnConfig.setProperties(properties);

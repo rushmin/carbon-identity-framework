@@ -71,6 +71,9 @@ public abstract class FrameworkConstants {
     public static final String DISABLE_RETRY_ON_FIDP_AS_PARAM = "MultiStepAuthentication.DisableRetryOnFIDPasParameter";
     public static final String IS_FIDP_PARAM_IN_FIREST_REQURST = "fidpInFirstRequest";
 
+    public static final String AUTHEN_CONTEXT_PROPERTIES = "AuthenticationContextProperties";
+    public static final String IDP_NAME = "IdpName";
+
     private FrameworkConstants() {
 
     }

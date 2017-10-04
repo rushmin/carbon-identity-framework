@@ -68,6 +68,8 @@ public abstract class FrameworkConstants {
     public static final String POST_AUTHENTICATION_REDIRECTION_TRIGGERED = "postAuthenticationRedirectionTriggered";
     public static final String MISSING_CLAIMS = "missingClaims";
     public static final String MAPPED_ATTRIBUTES = "MappedAttributes";
+    public static final String DISABLE_RETRY_ON_FIDP_AS_PARAM = "MultiStepAuthentication.DisableRetryOnFIDPasParameter";
+    public static final String IS_FIDP_PARAM_IN_FIREST_REQURST = "fidpInFirstRequest";
 
     private FrameworkConstants() {
 
@@ -138,6 +140,7 @@ public abstract class FrameworkConstants {
         public static final String QNAME_EXT_PROVISIONING_HANDLER = "ProvisioningHandler";
         public static final String QNAME_EXT_AUTHORIZATION_HANDLER = "AuthorizationHandler";
         public static final String QNAME_EXT_POST_AUTHENTICATION_HANDLER = "PostAuthenticationHandler";
+
 
         private Config() {
         }

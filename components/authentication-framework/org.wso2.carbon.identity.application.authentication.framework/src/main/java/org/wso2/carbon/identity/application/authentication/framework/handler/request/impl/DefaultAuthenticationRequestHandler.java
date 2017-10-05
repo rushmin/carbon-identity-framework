@@ -28,6 +28,7 @@ import org.wso2.carbon.identity.application.authentication.framework.Authenticat
 import org.wso2.carbon.identity.application.authentication.framework.config.model.ApplicationConfig;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.AuthenticatorConfig;
 import org.wso2.carbon.identity.application.authentication.framework.config.model.SequenceConfig;
+import org.wso2.carbon.identity.application.authentication.framework.config.model.StepConfig;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
 import org.wso2.carbon.identity.application.authentication.framework.context.SessionContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.ApplicationAuthorizationException;
@@ -49,6 +50,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -295,6 +298,51 @@ public class DefaultAuthenticationRequestHandler implements AuthenticationReques
                 if(!context.isPreviousAuthTime()) {
                     sessionContext.addProperty(FrameworkConstants.UPDATED_TIMESTAMP, updatedSessionTime);
                 }
+
+                List<Map<String, Object>> authenticationContextProperties = new ArrayList<>();
+
+                // Authentication context properties from already authenticated IdPs
+                if (sessionContext.getProperty(FrameworkConstants.AUTHEN_CONTEXT_PROPERTIES) != null) {
+                    List<Map<String, Object>> existingAuthenticationContextProperties =
+                            (List<Map<String, Object>>) sessionContext.getProperty
+                                    (FrameworkConstants.AUTHEN_CONTEXT_PROPERTIES);
+                    for (Map<String, Object> contextProperty : existingAuthenticationContextProperties) {
+                        for (StepConfig stepConfig : context.getSequenceConfig().getStepMap().values()) {
+                            if (stepConfig.getAuthenticatedIdP().equals(contextProperty.get(FrameworkConstants
+                                    .IDP_NAME))) {
+                                authenticationContextProperties.add(contextProperty);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Authentication context properties received from newly authenticated IdPs
+                if (context.getProperty(FrameworkConstants.AUTHEN_CONTEXT_PROPERTIES) != null) {
+                    authenticationContextProperties.addAll((List<Map<String, Object>>) context
+                            .getProperty(FrameworkConstants.AUTHEN_CONTEXT_PROPERTIES));
+
+                    if (sessionContext.getProperty(FrameworkConstants.AUTHEN_CONTEXT_PROPERTIES) == null) {
+                        sessionContext.addProperty(FrameworkConstants.AUTHEN_CONTEXT_PROPERTIES,
+                                authenticationContextProperties);
+                    } else {
+                        List<Map<String, Object>> existingAuthenticationContextProperties =
+                                (List<Map<String, Object>>) sessionContext.getProperty(FrameworkConstants
+                                        .AUTHEN_CONTEXT_PROPERTIES);
+                        existingAuthenticationContextProperties.addAll((List<Map<String, Object>>)
+                                context.getProperty(FrameworkConstants.AUTHEN_CONTEXT_PROPERTIES));
+
+                    }
+                }
+
+                if (!authenticationContextProperties.isEmpty()) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("AuthenticationContextProperties are available.");
+                    }
+                    authenticationResult.addProperty(FrameworkConstants.AUTHEN_CONTEXT_PROPERTIES,
+                            authenticationContextProperties);
+                }
+
                 // TODO add to cache?
                 // store again. when replicate  cache is used. this may be needed.
                 FrameworkUtils.addSessionContextToCache(sessionContextKey, sessionContext);
@@ -309,6 +357,16 @@ public class DefaultAuthenticationRequestHandler implements AuthenticationReques
                         sequenceConfig);
                 sessionContext.setAuthenticatedIdPs(context.getCurrentAuthenticatedIdPs());
                 sessionContext.setRememberMe(context.isRememberMe());
+                if (context.getProperty(FrameworkConstants.AUTHEN_CONTEXT_PROPERTIES) != null) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("AuthenticationContextProperties are available.");
+                    }
+                    authenticationResult.addProperty(FrameworkConstants.AUTHEN_CONTEXT_PROPERTIES,
+                            context.getProperty(FrameworkConstants.AUTHEN_CONTEXT_PROPERTIES));
+                    // Add to session context
+                    sessionContext.addProperty(FrameworkConstants.AUTHEN_CONTEXT_PROPERTIES,
+                            context.getProperty(FrameworkConstants.AUTHEN_CONTEXT_PROPERTIES));
+                }
                 String sessionKey = UUIDGenerator.generateUUID();
                 sessionContextKey = DigestUtils.sha256Hex(sessionKey);
                 sessionContext.addProperty(FrameworkConstants.AUTHENTICATED_USER, authenticationResult.getSubject());

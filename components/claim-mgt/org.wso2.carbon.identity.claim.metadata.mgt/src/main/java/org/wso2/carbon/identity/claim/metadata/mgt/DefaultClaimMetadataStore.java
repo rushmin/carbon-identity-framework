@@ -89,7 +89,7 @@ public class DefaultClaimMetadataStore implements ClaimMetadataStore {
         }
 
 
-        if (claimConfig.getClaims() != null) {
+        if (claimConfig.getClaimMap() != null) {
 
             // Adding local claims
             String primaryDomainName = UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME;
@@ -131,7 +131,7 @@ public class DefaultClaimMetadataStore implements ClaimMetadataStore {
                         }
                     }
 
-                    Map<String, String> claimProperties = claimConfig.getPropertyHolder().get(claimKey);
+                    Map<String, String> claimProperties = claimConfig.getPropertyHolderMap().get(claimKey);
                     claimProperties.remove(ClaimConstants.DIALECT_PROPERTY);
                     claimProperties.remove(ClaimConstants.CLAIM_URI_PROPERTY);
                     claimProperties.remove(ClaimConstants.ATTRIBUTE_ID_PROPERTY);
@@ -194,7 +194,7 @@ public class DefaultClaimMetadataStore implements ClaimMetadataStore {
 
                 if (!ClaimConstants.LOCAL_CLAIM_DIALECT_URI.equalsIgnoreCase(claimDialectURI)) {
 
-                    String mappedLocalClaimURI = claimConfig.getPropertyHolder().get(claimKey).get(ClaimConstants
+                    String mappedLocalClaimURI = claimConfig.getPropertyHolderMap().get(claimKey).get(ClaimConstants
                             .MAPPED_LOCAL_CLAIM_PROPERTY);
                     ExternalClaim externalClaim = new ExternalClaim(claimDialectURI, claimURI, mappedLocalClaimURI);
 

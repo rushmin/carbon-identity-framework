@@ -482,7 +482,8 @@
                                         <%} %>
                                         <% if (!userRealmInfo.getEveryOneRole().equals(name.getItemName())) {%>
                                         <a style="background-image:url(images/view.gif);" class="icon-link"
-                                           href="../role/view-users.jsp?roleName=<%=Encode.forUriComponent(name.getItemName())%>&prevPage=view&prevUser=<%=Encode.forUriComponent(encryptedUsername)%>&prevPageNumber=<%=pageNumber%>&<%=UserAdminUIConstants.ROLE_READ_ONLY%>=<%if (!name.getEditable()) { %>true<% }else{ %>false<% } %>"><fmt:message
+                                           href="../role/view-users.jsp?roleName=<%=Encode.forUriComponent(name.getItemName())%>&prevPage=view&prevUser=<%=Encode.forUriComponent(encryptedUsername)%>
+                                           &prevPageNumber=<%=pageNumber%>&<%=UserAdminUIConstants.ROLE_READ_ONLY%>=<%if (!name.getEditable()) { %>true<% }else{ %>false<% } %>"><fmt:message
                                                 key="view.users"/></a>
                                         <% } %>
                                     </td>

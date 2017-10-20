@@ -54,7 +54,6 @@
 <%
     String BUNDLE = "org.wso2.carbon.userstore.ui.i18n.Resources";
     ResourceBundle resourceBundle = ResourceBundle.getBundle(BUNDLE, request.getLocale());
-
     boolean error = false;
     boolean newFilter = false;
     boolean doRoleList = true;
@@ -80,7 +79,6 @@
     Set<FlaggedName> removeRoleElement = new LinkedHashSet<FlaggedName>();
     Set<String> countableUserStores = new LinkedHashSet<String>();
     Map<String, String> roleCount = new HashMap<String, String>();
-
     // clear session data
     session.removeAttribute("roleBean");
     session.removeAttribute(UserAdminUIConstants.ROLE_READ_ONLY);
@@ -105,8 +103,6 @@
     } else {
         newFilter = true;
     }
-
-
     //  search filter for count
     String selectedCountDomain = request.getParameter("countDomain");
     if (StringUtils.isBlank(selectedCountDomain)) {
@@ -117,10 +113,8 @@
     } else {
         newFilter = true;
     }
-
     session.setAttribute(UserAdminUIConstants.ROLE_LIST_DOMAIN_FILTER, selectedDomain.trim());
     session.setAttribute(UserAdminUIConstants.ROLE_LIST_COUNT_DOMAIN_FILTER, selectedCountDomain.trim());
-
     String filter = request.getParameter(UserAdminUIConstants.ROLE_LIST_FILTER);
     if (StringUtils.isBlank(filter)) {
         filter = (String) session.getAttribute(UserAdminUIConstants.ROLE_LIST_FILTER);
@@ -134,8 +128,6 @@
         }
         newFilter = true;
     }
-
-
     String countFilter = request.getParameter(UserAdminUIConstants.ROLE_COUNT_FILTER);
     if (StringUtils.isBlank(countFilter)) {
         countFilter = (java.lang.String) session.getAttribute(UserAdminUIConstants.ROLE_COUNT_FILTER);
@@ -149,16 +141,13 @@
         }
         newFilter = true;
     }
-
     String modifiedFilter = filter.trim();
     if (!UserAdminUIConstants.ALL_DOMAINS.equalsIgnoreCase(selectedDomain)) {
         modifiedFilter = selectedDomain + UserAdminUIConstants.DOMAIN_SEPARATOR + filter;
         modifiedFilter = modifiedFilter.trim();
     }
-
     session.setAttribute(UserAdminUIConstants.ROLE_LIST_FILTER, filter.trim());
     session.setAttribute(UserAdminUIConstants.ROLE_COUNT_FILTER, countFilter.trim());
-
     String currentUser = (String) session.getAttribute("logged-user");
     userRealmInfo = (UserRealmInfo) session.getAttribute(UserAdminUIConstants.USER_STORE_INFO);
     if (userRealmInfo != null) {
@@ -166,17 +155,13 @@
     }
     String errorAttribute = (String) session.getAttribute(UserAdminUIConstants.DO_ROLE_LIST);
     exceededDomains = (FlaggedName) session.getAttribute(UserAdminUIConstants.ROLE_LIST_CACHE_EXCEEDED);
-
     // check page number
     try {
-
         pageNumber = Integer.parseInt(request.getParameter("pageNumber"));
-
     } catch (NumberFormatException ignored) {
         // page number format exception
         pageNumber = 0;
     }
-
     flaggedNameMap = (Map<Integer, PaginatedNamesBean>) session.getAttribute(UserAdminUIConstants.ROLE_LIST_CACHE);
     if (flaggedNameMap != null) {
         PaginatedNamesBean bean = flaggedNameMap.get(pageNumber);
@@ -188,14 +173,11 @@
             }
         }
     }
-
     if (errorAttribute != null) {
         error = true;
         session.removeAttribute(UserAdminUIConstants.DO_ROLE_LIST);
     }
-
     if ((doRoleList || newFilter) && !error) {
-
         try {
             String cookie = (String) session.getAttribute(ServerConstants.ADMIN_SERVICE_COOKIE);
             String backendServerURL = CarbonUIUtil.getServerURL(config.getServletContext(), session);
@@ -205,20 +187,19 @@
             UserStoreCountClient countClient = new UserStoreCountClient(cookie, backendServerURL, configContext);
             UserManagementWorkflowServiceClient UserMgtClient = new
                     UserManagementWorkflowServiceClient(cookie, backendServerURL, configContext);
-            countableUserStores = countClient.getCountableUserStores();
-
-            if(countableUserStores != null && countableUserStores.size() > 0) {
-                countableUserStores.add(UserAdminUIConstants.ALL_DOMAINS);
-                countableUserStores.add(UserAdminUIConstants.INTERNAL_DOMAIN);
-                countableUserStores.add(UserAdminUIConstants.APPLICATION_DOMAIN);
+            if (CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity/userstore/count/view")) {
+                countableUserStores = countClient.getCountableUserStores();
+                if (countableUserStores != null && countableUserStores.size() > 0) {
+                    countableUserStores.add(UserAdminUIConstants.ALL_DOMAINS);
+                    countableUserStores.add(UserAdminUIConstants.INTERNAL_DOMAIN);
+                    countableUserStores.add(UserAdminUIConstants.APPLICATION_DOMAIN);
+                }
+                if (selectedCountDomain.equalsIgnoreCase(UserAdminUIConstants.ALL_DOMAINS)) {
+                    roleCount = countClient.countRoles(countFilter);
+                } else {
+                    roleCount.put(selectedCountDomain, String.valueOf(countClient.countRolesInDomain(countFilter, selectedCountDomain)));
+                }
             }
-
-            if (selectedCountDomain.equalsIgnoreCase(UserAdminUIConstants.ALL_DOMAINS)) {
-                roleCount = countClient.countRoles(countFilter);
-            } else {
-                roleCount.put(selectedCountDomain, String.valueOf(countClient.countRolesInDomain(countFilter, selectedCountDomain)));
-            }
-
             boolean sharedRoleEnabled = client.isSharedRolesEnabled();
             session.setAttribute(UserAdminUIConstants.SHARED_ROLE_ENABLED, sharedRoleEnabled);
             if (filter.length() > 0) {
@@ -227,25 +208,19 @@
                     List<FlaggedName> preactiveRoleList = new ArrayList<FlaggedName>(Arrays.asList(datas));
                     FlaggedName excessiveDomainElement = preactiveRoleList.remove(datas.length - 1);
                     removeRoleElement.add(excessiveDomainElement);
-
                     activeRoleList = new LinkedHashSet<FlaggedName>(preactiveRoleList);
-
                     String[] AddPendingRolesList = UserMgtClient.
                             listAllEntityNames("ADD_ROLE", "PENDING", "ROLE", modifiedFilter);
-
                     workFlowAddPendingRolesList = new LinkedHashSet<String>(Arrays.asList(AddPendingRolesList));
-
                     for (String s : AddPendingRolesList) {
                         FlaggedName flaggedName = new FlaggedName();
                         flaggedName.setItemName(s);
                         flaggedName.setEditable(true);
                         workFlowAddPendingRoles.add(flaggedName);
                     }
-
                     String[] DeletePendingUsersList = UserMgtClient.
                             listAllEntityNames("DELETE_ROLE", "PENDING", "ROLE", modifiedFilter);
                     workFlowDeletePendingRoles = new LinkedHashSet<String>(Arrays.asList(DeletePendingUsersList));
-
                     for (Iterator<FlaggedName> iterator = activeRoleList.iterator(); iterator.hasNext(); ) {
                         FlaggedName flaggedName = iterator.next();
                         if (flaggedName == null) {
@@ -277,7 +252,6 @@
                 userRealmInfo = client.getUserRealmInfo();
                 session.setAttribute(UserAdminUIConstants.USER_STORE_INFO, userRealmInfo);
             }
-
             if (datasList != null) {
                 flaggedNameMap = new HashMap<Integer, PaginatedNamesBean>();
                 int max = pageNumber + cachePages;
@@ -301,7 +275,6 @@
                     e.getMessage());
 %>
 <script type="text/javascript">
-
     jQuery(document).ready(function () {
         CARBON.showErrorDialog('<%=Encode.forJavaScript(Encode.forHtml(message))%>', null);
     });
@@ -309,10 +282,8 @@
 <%
         }
     }
-
     if (userRealmInfo != null) {
         List<String> list = new ArrayList<String>();
-
         UserStoreInfo[]  allUserStoreInfo = userRealmInfo.getUserStoresInfo();
         if (allUserStoreInfo != null && allUserStoreInfo.length > 0) {
             for (int i = 0; i < allUserStoreInfo.length; i++) {
@@ -323,7 +294,6 @@
                 }
             }
         }
-
         list.add(UserAdminUIConstants.ALL_DOMAINS);
         list.add(UserAdminUIConstants.INTERNAL_DOMAIN);
         list.add(UserAdminUIConstants.APPLICATION_DOMAIN);
@@ -337,7 +307,6 @@
 		topPage="false" request="<%=request%>" />
 
     <script type="text/javascript">
-
         function deleteUserGroup(role) {
             function doDelete() {
                 var roleName = role;
@@ -356,10 +325,8 @@
                     }
                 });
             }
-
             CARBON.showConfirmationDialog('<fmt:message key="confirm.delete.role"/> ' + role + '?', doDelete, null);
         }
-
         <%if (showFilterMessage) {%>
         jQuery(document).ready(function () {
             CARBON.showInfoDialog('<fmt:message key="no.roles.filtered"/>', null, null);
@@ -370,12 +337,10 @@
         }*/
     </script>
     <script type="text/javascript">
-
         function updateUserGroup(role) {
                 var roleName = role;
                 location.href = 'rename-role.jsp?roleName=' + roleName;
         }
-
     </script>
     <div id="middle">
         <h2><fmt:message key="roles"/></h2>
@@ -437,6 +402,8 @@
                     </tbody>
                 </table>
             </form>
+
+            <% if (CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity/userstore/count/view")) { %>
 
             <form name="countForm" method="post" action="role-mgt.jsp">
                 <table class="styledLeft">
@@ -520,6 +487,8 @@
                     %>
                 </table>
             </form>
+
+            <%}%>
             <p>&nbsp;</p>
 
             <carbon:paginator pageNumber="<%=pageNumber%>"
@@ -638,30 +607,41 @@
                          <%}%>--%>
                     <td>
                         <%if (!data.getShared()) { %>
-                        <% if (!data.getItemName().equals(userRealmInfo.getAdminRole()) && !data.getItemName().equals(userRealmInfo.getEveryOneRole()) && data.getEditable()) {%>
+                        <% if (!data.getItemName().equals(userRealmInfo.getAdminRole()) &&
+                               !data.getItemName().equals(userRealmInfo.getEveryOneRole()) && data.getEditable() &&
+                               CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity/rolemgt/update")) {%>
+
                         <a href="#" onclick="updateUserGroup('<%=Encode.forJavaScriptAttribute(roleName)%>')"
                            class="icon-link" style="background-image:url(images/edit.gif);"><fmt:message
                                 key="rename"/></a>
                         <% } %>
-                        <% if (!data.getItemName().equals(userRealmInfo.getAdminRole())) {%>
+                        <% if (!data.getItemName().equals(userRealmInfo.getAdminRole()) &&
+                               CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity/rolemgt/update")) {%>
                         <a href="edit-permissions.jsp?roleName=<%=Encode.forUriComponent(roleName)%>" class="icon-link"
                            style="background-image:url(images/edit.gif);"><fmt:message key="edit.permissions"/></a>
                         <% }
                         }%>
 
-                        <% if (!userRealmInfo.getEveryOneRole().equals(data.getItemName()) && data.getEditable()) { %>
+                        <% if (!userRealmInfo.getEveryOneRole().equals(data.getItemName()) && data.getEditable() &&
+                               CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity/usermgt/update"))
+                        { %>
                         <a href="edit-users.jsp?roleName=<%=Encode.forUriComponent(roleName)%>&<%=UserAdminUIConstants.ROLE_READ_ONLY%>=<%=!data.getEditable()%>"
                            class="icon-link" style="background-image:url(images/edit.gif);"><fmt:message
                                 key="edit.users"/></a>
                         <% } %>
-                        <% if (!userRealmInfo.getEveryOneRole().equals(data.getItemName())) { %>
+                        <% if (!userRealmInfo.getEveryOneRole().equals(data.getItemName()) &&
+                               CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity/usermgt/view"))
+                        { %>
                         <a href="view-users.jsp?roleName=<%=Encode.forUriComponent(roleName)%>&<%=UserAdminUIConstants.ROLE_READ_ONLY%>=<%=!data.getEditable()%>"
                            class="icon-link" style="background-image:url(images/view.gif);"><fmt:message
                                 key="view.users"/></a>
                         <% } %>
                         <%if (!data.getShared()) { %>
 
-                        <% if (!data.getItemName().equals(userRealmInfo.getAdminRole()) && !data.getItemName().equals(userRealmInfo.getEveryOneRole()) && data.getEditable()) {%>
+                        <% if (!data.getItemName().equals(userRealmInfo.getAdminRole()) &&
+                               !data.getItemName().equals(userRealmInfo.getEveryOneRole()) && data.getEditable() &&
+                               CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity/rolemgt/delete"))
+                        {%>
                         <a href="#" onclick="deleteUserGroup('<%=Encode.forJavaScriptAttribute(roleName)%>')"
                            class="icon-link" style="background-image:url(images/delete.gif);"><fmt:message
                                 key="delete"/></a>
@@ -735,7 +715,6 @@
     </div>
     <script type="text/javascript">
         alternateTableRows('roleTable', 'tableEvenRow', 'tableOddRow');
-
         $(document).ready(function () {
             $('form[name=filterForm]').submit(function(){
                 return doValidateForm(this, '<fmt:message key="error.input.validation.msg"/>');

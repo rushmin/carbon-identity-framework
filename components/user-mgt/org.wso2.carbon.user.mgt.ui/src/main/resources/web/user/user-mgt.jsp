@@ -47,13 +47,11 @@
 <jsp:include page="../dialog/display_messages.jsp"/>
 <title>WSO2 Carbon - Security Configuration</title>
 <%
-
     boolean error = false;
     boolean newFilter = false;
     boolean doUserList = true;
     boolean showFilterMessage = false;
     String forwardTo = "user-mgt.jsp";
-
     FlaggedName[] datas = null;
     FlaggedName exceededDomains = null;
     String[] claimUris = null;
@@ -74,10 +72,8 @@
     Set<FlaggedName> aggregateUserList = new LinkedHashSet<FlaggedName>();
     Set<FlaggedName> removeUserElement = new LinkedHashSet<FlaggedName>();
     Set<String> countableUserStores = new LinkedHashSet<String>();
-
     String BUNDLE = "org.wso2.carbon.userstore.ui.i18n.Resources";
     ResourceBundle resourceBundle = ResourceBundle.getBundle(BUNDLE, request.getLocale());
-
     // remove session data
     session.removeAttribute("userBean");
     session.removeAttribute(UserAdminUIConstants.USER_DISPLAY_NAME);
@@ -91,17 +87,14 @@
     session.removeAttribute(UserAdminUIConstants.USER_LIST_UNASSIGNED_ROLE_FILTER);
     session.removeAttribute(UserAdminUIConstants.USER_LIST_VIEW_ROLE_FILTER);
     session.removeAttribute(UserAdminUIConstants.USER_LIST_CACHE);
-
     // retrieve session attributes
     String currentUser = (String) session.getAttribute("logged-user");
     UserRealmInfo userRealmInfo = (UserRealmInfo) session.getAttribute(UserAdminUIConstants.USER_STORE_INFO);
     java.lang.String errorAttribute = (java.lang.String) session.getAttribute(UserAdminUIConstants.DO_USER_LIST);
-
     String claimUri = request.getParameter("claimUri");
     if (StringUtils.isBlank(claimUri)) {
         claimUri = (java.lang.String) session.getAttribute(UserAdminUIConstants.USER_CLAIM_FILTER);
     }
-
     String countClaimUri = request.getParameter("countClaimUri");
     if (StringUtils.isBlank(countClaimUri)) {
         countClaimUri = (java.lang.String) session.getAttribute(UserAdminUIConstants.USER_CLAIM_COUNT_FILTER);
@@ -109,11 +102,9 @@
             countClaimUri = UserAdminUIConstants.SELECT;
         }
     }
-
     session.setAttribute(UserAdminUIConstants.USER_CLAIM_FILTER, claimUri);
     session.setAttribute(UserAdminUIConstants.USER_CLAIM_COUNT_FILTER, countClaimUri);
     exceededDomains = (FlaggedName) session.getAttribute(UserAdminUIConstants.USER_LIST_CACHE_EXCEEDED);
-
     //  search filter
     String selectedDomain = request.getParameter("domain");
     if (StringUtils.isBlank(selectedDomain)) {
@@ -124,7 +115,6 @@
     } else {
         newFilter = true;
     }
-
     //  search filter
     String selectedCountDomain = request.getParameter("countDomain");
     if (StringUtils.isBlank(selectedCountDomain)) {
@@ -135,10 +125,8 @@
     } else {
         newFilter = true;
     }
-
     session.setAttribute(UserAdminUIConstants.USER_LIST_DOMAIN_FILTER, selectedDomain.trim());
     session.setAttribute(UserAdminUIConstants.USER_LIST_COUNT_DOMAIN_FILTER, selectedCountDomain.trim());
-
     String filter = request.getParameter(UserAdminUIConstants.USER_LIST_FILTER);
     if (StringUtils.isBlank(filter)) {
         filter = (java.lang.String) session.getAttribute(UserAdminUIConstants.USER_LIST_FILTER);
@@ -152,7 +140,6 @@
         }
         newFilter = true;
     }
-
     String countFilter = request.getParameter(UserAdminUIConstants.USER_COUNT_FILTER);
     if (StringUtils.isBlank(countFilter)) {
         countFilter = (java.lang.String) session.getAttribute(UserAdminUIConstants.USER_COUNT_FILTER);
@@ -166,8 +153,6 @@
         }
         newFilter = true;
     }
-
-
     String userDomainSelector;
     String modifiedFilter = filter.trim();
     if (!UserAdminUIConstants.ALL_DOMAINS.equalsIgnoreCase(selectedDomain)) {
@@ -177,26 +162,21 @@
     } else {
         userDomainSelector = "*";
     }
-
     session.setAttribute(UserAdminUIConstants.USER_LIST_FILTER, filter.trim());
     session.setAttribute(UserAdminUIConstants.USER_COUNT_FILTER, countFilter.trim());
-
     // check page number
     String pageNumberStr = request.getParameter("pageNumber");
     if (pageNumberStr == null) {
         pageNumberStr = "0";
     }
-
     if (userRealmInfo != null) {
         claimUris = userRealmInfo.getRequiredUserClaims();
     }
-
     try {
         pageNumber = Integer.parseInt(pageNumberStr);
     } catch (NumberFormatException ignored) {
         // page number format exception
     }
-
     flaggedNameMap = (Map<Integer, PaginatedNamesBean>) session.getAttribute(UserAdminUIConstants.USER_LIST_CACHE);
     if (flaggedNameMap != null) {
         PaginatedNamesBean bean = flaggedNameMap.get(pageNumber);
@@ -208,12 +188,10 @@
             }
         }
     }
-
     if (errorAttribute != null) {
         error = true;
         session.removeAttribute(UserAdminUIConstants.DO_USER_LIST);
     }
-
     if ((doUserList || newFilter) && !error) { // don't call the back end if some kind of message is showing
         try {
             java.lang.String cookie = (java.lang.String) session
@@ -224,37 +202,33 @@
                     .getServletContext()
                     .getAttribute(CarbonConstants.CONFIGURATION_CONTEXT);
             UserAdminClient client = new UserAdminClient(cookie, backendServerURL, configContext);
-            UserStoreCountClient countClient = new UserStoreCountClient(cookie, backendServerURL, configContext);
             UserManagementWorkflowServiceClient UserMgtClient = new
                     UserManagementWorkflowServiceClient(cookie, backendServerURL, configContext);
-
-            countableUserStores = countClient.getCountableUserStores();
-
-            if (UserAdminUIConstants.SELECT.equalsIgnoreCase(countClaimUri)) {    //this is user name based search
-                if (selectedCountDomain.equalsIgnoreCase(UserAdminUIConstants.ALL_DOMAINS)) {
-                    userCount = countClient.countUsers(countFilter);
-                } else {
-                    userCount.put(selectedCountDomain, String.valueOf(countClient.countUsersInDomain(countFilter, selectedCountDomain)));
-                }
-            } else {                //this is a claim based search
-                if (selectedCountDomain.equalsIgnoreCase(UserAdminUIConstants.ALL_DOMAINS)) {
-                    userCount = countClient.countByClaim(countClaimUri, countFilter);
-                } else {
-                    userCount.put(selectedCountDomain, String.valueOf(countClient.countByClaimInDomain(countClaimUri,
-                            countFilter, selectedCountDomain)));
+            UserStoreCountClient countClient = new UserStoreCountClient(cookie, backendServerURL, configContext);
+            if (CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity/userstore/count/view")) {
+                countableUserStores = countClient.getCountableUserStores();
+                if (UserAdminUIConstants.SELECT.equalsIgnoreCase(countClaimUri)) {    //this is user name based search
+                    if (selectedCountDomain.equalsIgnoreCase(UserAdminUIConstants.ALL_DOMAINS)) {
+                        userCount = countClient.countUsers(countFilter);
+                    } else {
+                        userCount.put(selectedCountDomain, String.valueOf(countClient.countUsersInDomain(countFilter, selectedCountDomain)));
+                    }
+                } else {                //this is a claim based search
+                    if (selectedCountDomain.equalsIgnoreCase(UserAdminUIConstants.ALL_DOMAINS)) {
+                        userCount = countClient.countByClaim(countClaimUri, countFilter);
+                    } else {
+                        userCount.put(selectedCountDomain, String.valueOf(countClient.countByClaimInDomain(countClaimUri,
+                                                                                                           countFilter, selectedCountDomain)));
+                    }
                 }
             }
-
-
             if (userRealmInfo == null) {
                 userRealmInfo = client.getUserRealmInfo();
                 session.setAttribute(UserAdminUIConstants.USER_STORE_INFO, userRealmInfo);
             }
-
             if (userRealmInfo != null) {
                 claimUris = userRealmInfo.getDefaultUserClaims();
             }
-
             if (filter.length() > 0) {
                 if (claimUri != null && !"select".equalsIgnoreCase(claimUri)) {
                     ClaimValue claimValue = new ClaimValue();
@@ -268,13 +242,10 @@
                     List<FlaggedName> preactiveUserList = new ArrayList<FlaggedName>(Arrays.asList(datas));
                     FlaggedName excessiveDomainElement = preactiveUserList.remove(datas.length - 1);
                     removeUserElement.add(excessiveDomainElement);
-
                     activeUserList = new LinkedHashSet<FlaggedName>(preactiveUserList);
-
                     String[] AddPendingUsersList = UserMgtClient.
                             listAllEntityNames("ADD_USER", "PENDING", "USER", modifiedFilter);
                     workFlowAddPendingUsersList = new LinkedHashSet<String>(Arrays.asList(AddPendingUsersList));
-
                     for (String s : AddPendingUsersList) {
                         FlaggedName flaggedName = new FlaggedName();
                         flaggedName.setItemName(s);
@@ -284,7 +255,6 @@
                     String[] DeletePendingUsersList = UserMgtClient.
                             listAllEntityNames("DELETE_USER", "PENDING", "USER", modifiedFilter);
                     workFlowDeletePendingUsers = new LinkedHashSet<String>(Arrays.asList(DeletePendingUsersList));
-
                     for (Iterator<FlaggedName> iterator = activeUserList.iterator(); iterator.hasNext(); ) {
                         FlaggedName flaggedName = iterator.next();
                         if (flaggedName == null) {
@@ -303,7 +273,6 @@
                     aggregateUserList.addAll(removeUserElement);
                     datas = aggregateUserList.toArray(new FlaggedName[aggregateUserList.size()]);
                 }
-
                 List<FlaggedName> dataList = new ArrayList<FlaggedName>(Arrays.asList(datas));
                 exceededDomains = dataList.remove(dataList.size() - 1);
                 session.setAttribute(UserAdminUIConstants.USER_LIST_CACHE_EXCEEDED, exceededDomains);
@@ -311,7 +280,6 @@
                     session.removeAttribute(UserAdminUIConstants.USER_LIST_FILTER);
                     showFilterMessage = true;
                 }
-
                 if (dataList != null) {
                     flaggedNameMap = new HashMap<Integer, PaginatedNamesBean>();
                     int max = pageNumber + cachePages;
@@ -331,13 +299,11 @@
                     session.setAttribute(UserAdminUIConstants.USER_LIST_CACHE, flaggedNameMap);
                 }
             }
-
         } catch (Exception e) {
             String message = MessageFormat.format(resourceBundle.getString("error.while.user.filtered"),
                     e.getMessage());
 %>
 <script type="text/javascript">
-
     jQuery(document).ready(function () {
         CARBON.showErrorDialog('<%=Encode.forJavaScript(Encode.forHtml(message))%>', null);
     });
@@ -345,7 +311,6 @@
 <%
         }
     }
-
     if (userRealmInfo != null) {
         domainNames = userRealmInfo.getDomainNames();
         if (domainNames != null) {
@@ -361,7 +326,6 @@
                        topPage="false" request="<%=request%>"/>
 
     <script type="text/javascript">
-
         function deleteUser(user) {
             function doDelete() {
                 var userName = user;
@@ -382,13 +346,11 @@
             }
             CARBON.showConfirmationDialog("<fmt:message key="confirm.delete.user"/> \'" + user + "\'?", doDelete, null);
         }
-
         $(document).ready(function () {
             $('form[name=filterForm]').submit(function(){
                 return doValidateForm(this, '<fmt:message key="error.input.validation.msg"/>');
             })
         });
-
         <%if (showFilterMessage == true) {%>
         jQuery(document).ready(function () {
             CARBON.showInfoDialog('<fmt:message key="no.users.filtered"/>', null, null);
@@ -458,7 +420,6 @@
                             <option value="Select" selected="selected"><%=UserAdminUIConstants.SELECT%></option>
                             <%
                                 if (claimUris != null) {
-
                                     for (String claim : claimUris) {
                                         if (claimUri != null && claim.equals(claimUri)) {
                             %>
@@ -484,6 +445,7 @@
             </form>
             <p>&nbsp;</p>
 
+            <% if (CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity/userstore/count/view")) { %>
             <form name="countForm" method="post" action="user-mgt.jsp">
                 <table class="styledLeft">
                     <%
@@ -545,7 +507,6 @@
                             <option value="Select" selected="selected"><%=UserAdminUIConstants.SELECT%></option>
                             <%
                                 if (claimUris != null) {
-
                                     for (String claim : claimUris) {
                                         if (countClaimUri != null && claim.equals(countClaimUri)) {
                             %>
@@ -597,6 +558,8 @@
                     %>
                 </table>
             </form>
+
+            <%}%>
             <p>&nbsp;</p>
 
             <carbon:paginator pageNumber="<%=pageNumber%>"
@@ -680,9 +643,9 @@
                     <td>
                         <%
                             if (!Util.getUserStoreInfoForUser(userName, userRealmInfo).getPasswordsExternallyManaged() &&
-                                    CarbonUIUtil.isUserAuthorized(request,
-                                            "/permission/admin/manage/identity/usermgt/passwords") &&
-                                    users[i].getEditable()) { //if passwords are managed externally do not allow to change passwords.
+                                CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity/identitymgt/update") &&
+                                users[i].getEditable()) {
+                                //if passwords are managed externally do not allow to change passwords.
                                 if (userName.equals(currentUser)) {
                         %>
                         <a href="change-passwd.jsp?isUserChange=true&returnPath=user-mgt.jsp" class="icon-link"
@@ -707,7 +670,7 @@
                                 key="edit.roles"/></a>
 
                         <%
-                            if (CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity")) {
+                            if (CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity/rolemgt/view")) {
                         %>
                         <a href="view-roles.jsp?username=<%=Encode.forUriComponent(encryptedUsername)%>&displayName=<%=Encode.forUriComponent(displayName)%>"
                            class="icon-link"
@@ -736,8 +699,8 @@
 
                         <%
                             if (CarbonUIUtil.isContextRegistered(config, "/userprofile/")
-                                    && CarbonUIUtil.isUserAuthorized(request,
-                                    "/permission/admin/manage/identity/usermgt/profiles")) {
+                                && CarbonUIUtil.isUserAuthorized(request,
+                                                                 "/permission/admin/manage/identity/usermgt/update")) {
                         %>
                         <a
                                 href="../userprofile/index.jsp?username=<%=Encode.forUriComponent(encryptedUsername)%>&displayName=<%=Encode.forUriComponent(displayName)%>&fromUserMgt=true"
@@ -786,9 +749,9 @@
                         %>
                         <%
                             if (!Util.getUserStoreInfoForUser(userName, userRealmInfo).getPasswordsExternallyManaged() &&      // TODO
-                                    CarbonUIUtil.isUserAuthorized(request,
-                                            "/permission/admin/manage/identity/usermgt/passwords") &&
-                                    users[i].getEditable()) { //if passwords are managed externally do not allow to change passwords.
+                                CarbonUIUtil.isUserAuthorized(request,
+                                                              "/permission/admin/manage/identity/identitymgt/update") &&
+                                users[i].getEditable()) { //if passwords are managed externally do not allow to change passwords.
                                 if (userName.equals(currentUser)) {
                         %>
                         <a href="change-passwd.jsp?isUserChange=true&returnPath=user-mgt.jsp" class="icon-link"
@@ -809,7 +772,8 @@
                         %>
 
                         <%
-                            if (CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity")) {
+                            if (CarbonUIUtil.isUserAuthorized(request,
+                                                              "/permission/admin/manage/identity/rolemgt/update")) {
                         %>
                         <a href="edit-user-roles.jsp?username=<%=Encode.forUriComponent(encryptedUsername)%>&displayName=<%=Encode.forUriComponent(displayName)%>"
                            class="icon-link"
@@ -820,7 +784,8 @@
                         %>
 
                         <%
-                            if (CarbonUIUtil.isUserAuthorized(request, "/permission/admin/manage/identity")) {
+                            if (CarbonUIUtil.isUserAuthorized(request,
+                                                              "/permission/admin/manage/identity/rolemgt/view")) {
                         %>
                         <a href="view-roles.jsp?username=<%=Encode.forUriComponent(encryptedUsername)%>&displayName=<%=Encode.forUriComponent(displayName)%>"
                            class="icon-link"
@@ -832,9 +797,9 @@
 
                         <%
                             if (CarbonUIUtil.isUserAuthorized(request,
-                                    "/permission/admin/manage/identity/usermgt/users") && !userName.equals(currentUser)
-                                    && !userName.equals(userRealmInfo.getAdminUser()) &&
-                                    users[i].getEditable()) {
+                                                              "/permission/admin/manage/identity/usermgt/delete") && !userName.equals(currentUser)
+                                && !userName.equals(userRealmInfo.getAdminUser()) &&
+                                users[i].getEditable()) {
                         %>
                         <a href="#" onclick="deleteUser('<%=Encode.forJavaScriptAttribute(userName)%>')"
                            class="icon-link"
@@ -864,8 +829,8 @@
 
                         <%
                             if (CarbonUIUtil.isContextRegistered(config, "/userprofile/")
-                                    && CarbonUIUtil.isUserAuthorized(request,
-                                    "/permission/admin/manage/identity/usermgt/profiles")) {
+                                && CarbonUIUtil.isUserAuthorized(request,
+                                                                 "/permission/admin/configure/security/usermgt/profiles")) {
                         %>
                         <a href="../userprofile/index.jsp?username=<%=Encode.forUriComponent(encryptedUsername)%>&displayName=<%=Encode.forUriComponent(displayName)%>&fromUserMgt=true"
                            class="icon-link" style="background-image:url(../userprofile/images/my-prof.gif);">User

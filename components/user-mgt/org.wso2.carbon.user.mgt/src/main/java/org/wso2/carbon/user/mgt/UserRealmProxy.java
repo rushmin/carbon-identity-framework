@@ -534,16 +534,20 @@ public class UserRealmProxy {
         try {
 
             RealmConfiguration realmConfig = realm.getRealmConfiguration();
-            if (realm.getAuthorizationManager().isUserAuthorized(userName,
-                    "/permission/admin/manage/identity", CarbonConstants.UI_PERMISSION_ACTION) ||
-                    realm.getAuthorizationManager().isUserAuthorized(userName,
-                            "/permission/admin/manage/identity/usermgt/users", CarbonConstants.UI_PERMISSION_ACTION)
-                    || realm.getAuthorizationManager().isUserAuthorized(userName,
-                    "/permission/admin/manage/identity/usermgt/passwords",
-                    CarbonConstants.UI_PERMISSION_ACTION) ||
-                    realm.getAuthorizationManager().isUserAuthorized(userName,
-                            "/permission/admin/manage/identity/usermgt/profiles",
-                            CarbonConstants.UI_PERMISSION_ACTION)) {
+            if (realm.getAuthorizationManager().isUserAuthorized(userName, "/permission/admin/manage/identity",
+                                                                 CarbonConstants.UI_PERMISSION_ACTION) ||
+                realm.getAuthorizationManager()
+                        .isUserAuthorized(userName, "/permission/admin/manage/identity/usermgt/users",
+                                          CarbonConstants.UI_PERMISSION_ACTION) ||
+                realm.getAuthorizationManager()
+                        .isUserAuthorized(userName, "/permission/admin/manage/identity/usermgt/passwords",
+                                          CarbonConstants.UI_PERMISSION_ACTION) ||
+                realm.getAuthorizationManager()
+                        .isUserAuthorized(userName, "/permission/admin/manage/identity/usermgt/view",
+                                          CarbonConstants.UI_PERMISSION_ACTION) ||
+                realm.getAuthorizationManager()
+                        .isUserAuthorized(userName, "/permission/admin/manage/identity/rolemgt/view",
+                                          CarbonConstants.UI_PERMISSION_ACTION)) {
 
                 userRealmInfo.setAdminRole(realmConfig.getAdminRoleName());
                 userRealmInfo.setAdminUser(realmConfig.getAdminUserName());

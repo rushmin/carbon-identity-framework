@@ -28,7 +28,7 @@
             <order>1</order>
             <style-class>manage</style-class>
             <icon>../userstore/images/user-store.gif</icon>
-            <at-least>/permission/admin/login</at-least>
+            <require-permission>/permission/admin/login</require-permission>
         </menu>
 
         <menu>

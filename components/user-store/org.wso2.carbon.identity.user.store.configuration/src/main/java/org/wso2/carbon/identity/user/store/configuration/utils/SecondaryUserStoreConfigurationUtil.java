@@ -35,6 +35,7 @@ import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
+import java.util.Properties;
 
 /**
  * Util class responsible for processing encryption and decryption over secondary user store
@@ -48,6 +49,9 @@ public class SecondaryUserStoreConfigurationUtil {
     private static final String SERVER_KEYSTORE_PASSWORD = "Security.KeyStore.Password";
     private static final String SERVER_KEYSTORE_KEY_ALIAS = "Security.KeyStore.KeyAlias";
     private static Cipher cipher = null;
+    private static final String DEFAULT_ALGORITHM = "RSA";
+    private static final String CIPHER_TRANSFORMATION_SECRET_CONF_PROPERTY = "keystore.identity.CipherTransformation";
+    private static final String CIPHER_TRANSFORMATION_SYSTEM_PROPERTY = "org.wso2.CipherTransformation";
 
     private SecondaryUserStoreConfigurationUtil() {
 
@@ -78,7 +82,14 @@ public class SecondaryUserStoreConfigurationUtil {
                     store = KeyStore.getInstance(keyStoreType);
                     store.load(inputStream, password.toCharArray());
                     Certificate[] certs = store.getCertificateChain(keyAlias);
-                    cipher = Cipher.getInstance("RSA", "BC");
+                    String carbonHome = System.getProperty("carbon.home");
+                    String securityFilePath =  carbonHome + File.separator + "repository" +
+                            File.separator + "conf" + File.separator +
+                            "security" + File.separator +
+                            "secret-conf.properties";
+                    Properties properties = loadProperties(securityFilePath);
+                    String cipherTransformation = getCipherTransformation(properties);
+                    cipher = Cipher.getInstance(cipherTransformation, "BC");
                     cipher.init(Cipher.ENCRYPT_MODE, certs[0].getPublicKey());
                 } catch (FileNotFoundException e) {
                     String errorMsg = "Keystore File Not Found in configured location";
@@ -132,4 +143,70 @@ public class SecondaryUserStoreConfigurationUtil {
             throw new IdentityUserStoreMgtException(errMsg, e);
         }
     }
+
+    /**
+     * Get the Cipher Transformation to be used by the Cipher. We have the option of configuring this globally as a
+     * System Property '-Dorg.wso2.CipherTransformation', which can be overridden at the 'secret-conf.properties' level
+     * by specifying the property 'keystore.identity.CipherTransformation'. If neither are configured the default 'RSA'
+     * will be used
+     *
+     * @param properties Properties from the 'secret-conf.properties' file
+     * @return Cipher Transformation String
+     */
+    private static String getCipherTransformation(Properties properties) {
+        String cipherTransformation = System.getProperty(CIPHER_TRANSFORMATION_SYSTEM_PROPERTY);
+
+        if (cipherTransformation == null) {
+            cipherTransformation = DEFAULT_ALGORITHM;
+        }
+
+        return getProperty(properties, CIPHER_TRANSFORMATION_SECRET_CONF_PROPERTY,
+                cipherTransformation);
+    }
+
+    public static Properties loadProperties(String filePath) {
+        Properties properties = new Properties();
+        String carbonHome = System.getProperty("carbon.home");
+        filePath = carbonHome + File.separator + filePath;
+        File configFile = new File(filePath);
+        if(!configFile.exists()) {
+            return properties;
+        } else {
+            FileInputStream in = null;
+
+            try {
+                in = new FileInputStream(configFile);
+                properties.load(in);
+            } catch (IOException var14) {
+                String msg = "Error loading properties from a file at :" + filePath;
+                log.warn(msg, var14);
+                return properties;
+            } finally {
+                if(in != null) {
+                    try {
+                        in.close();
+                    } catch (IOException var13) {
+                        log.error("Error while closing input stream");
+                    }
+                }
+
+            }
+
+            return properties;
+        }
+    }
+
+    public static String getProperty(Properties properties, String name, String defaultValue) {
+        String result = properties.getProperty(name);
+        if((result == null || result.length() == 0) && defaultValue != null) {
+            if(log.isDebugEnabled()) {
+                log.debug("The name with ' " + name + " ' cannot be found. " + "Using default value " + defaultValue);
+            }
+
+            result = defaultValue;
+        }
+
+        return result != null?result.trim():defaultValue;
+    }
+
 }

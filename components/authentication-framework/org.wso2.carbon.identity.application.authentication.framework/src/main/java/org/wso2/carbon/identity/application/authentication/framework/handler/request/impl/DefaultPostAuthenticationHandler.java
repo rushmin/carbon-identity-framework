@@ -148,6 +148,9 @@ public class DefaultPostAuthenticationHandler implements PostAuthenticationHandl
                         missingClaims);
                 uriBuilder.addParameter(FrameworkConstants.SESSION_DATA_KEY,
                         context.getContextIdentifier());
+                uriBuilder.addParameter(FrameworkConstants.REQUEST_PARAM_SP,
+                        context.getSequenceConfig().getApplicationConfig().getApplicationName());
+                // This is to ensure backward compatibility after changing the parameter name.
                 uriBuilder.addParameter("spName",
                         context.getSequenceConfig().getApplicationConfig().getApplicationName());
                 response.sendRedirect(uriBuilder.build().toString());

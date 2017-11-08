@@ -22,6 +22,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.CarbonConstants;
+import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.application.authentication.framework.ApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authentication.framework.AuthenticationDataPublisher;
@@ -84,14 +85,12 @@ import org.wso2.carbon.identity.claim.metadata.mgt.ClaimMetadataHandler;
 import org.wso2.carbon.identity.claim.metadata.mgt.exception.ClaimMetadataException;
 import org.wso2.carbon.identity.core.model.CookieBuilder;
 import org.wso2.carbon.identity.core.model.IdentityCookieConfig;
+import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -107,6 +106,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class FrameworkUtils {
 
@@ -116,7 +118,7 @@ public class FrameworkUtils {
     private static int maxInactiveInterval;
     private static final String EMAIL = "email";
     private static List<String> cacheDisabledAuthenticators = Arrays
-            .asList(new String[] { FrameworkConstants.RequestType.CLAIM_TYPE_SAML_SSO, FrameworkConstants.OAUTH2 });
+            .asList(new String[]{FrameworkConstants.RequestType.CLAIM_TYPE_SAML_SSO, FrameworkConstants.OAUTH2});
 
     private FrameworkUtils() {
     }
@@ -184,24 +186,24 @@ public class FrameworkUtils {
             // Adding field variables to wrapper
             if (authenticationRequest.getType() != null) {
                 modifiableParameters.put(FrameworkConstants.RequestParams.TYPE,
-                                         new String[]{authenticationRequest.getType()});
+                        new String[]{authenticationRequest.getType()});
             }
             if (authenticationRequest.getCommonAuthCallerPath() != null) {
                 modifiableParameters.put(FrameworkConstants.RequestParams.CALLER_PATH,
-                                         new String[]{authenticationRequest.getCommonAuthCallerPath()});
+                        new String[]{authenticationRequest.getCommonAuthCallerPath()});
             }
             if (authenticationRequest.getRelyingParty() != null) {
                 modifiableParameters.put(FrameworkConstants.RequestParams.ISSUER,
-                                         new String[]{authenticationRequest.getRelyingParty()});
+                        new String[]{authenticationRequest.getRelyingParty()});
             }
             if (authenticationRequest.getTenantDomain() != null) {
                 modifiableParameters.put(FrameworkConstants.RequestParams.TENANT_DOMAIN,
-                                         new String[]{authenticationRequest.getTenantDomain()});
+                        new String[]{authenticationRequest.getTenantDomain()});
             }
             modifiableParameters.put(FrameworkConstants.RequestParams.FORCE_AUTHENTICATE,
-                                     new String[]{String.valueOf(authenticationRequest.getForceAuth())});
+                    new String[]{String.valueOf(authenticationRequest.getForceAuth())});
             modifiableParameters.put(FrameworkConstants.RequestParams.PASSIVE_AUTHENTICATION,
-                                     new String[]{String.valueOf(authenticationRequest.getPassiveAuth())});
+                    new String[]{String.valueOf(authenticationRequest.getPassiveAuth())});
 
             if (log.isDebugEnabled()) {
                 StringBuilder queryStringBuilder = new StringBuilder("");
@@ -224,7 +226,7 @@ public class FrameworkUtils {
             }
 
             return new AuthenticationFrameworkWrapper(request, modifiableParameters,
-                                                      authenticationRequest.getRequestHeaders());
+                    authenticationRequest.getRequestHeaders());
         }
         return request;
     }
@@ -459,7 +461,7 @@ public class FrameworkUtils {
 
         PostAuthenticationHandler postAuthenticationHandler;
         Object obj = ConfigurationFacade.getInstance().getExtensions().get(FrameworkConstants.Config
-                                                                                   .QNAME_EXT_AUTHORIZATION_HANDLER);
+                .QNAME_EXT_AUTHORIZATION_HANDLER);
 
         if (obj instanceof PostAuthenticationHandler) {
             postAuthenticationHandler = (PostAuthenticationHandler) obj;
@@ -467,7 +469,7 @@ public class FrameworkUtils {
             // Giving the priority to 'AuthorizationHandler' and then to 'PostAuthenticationHandler' config to
             // preserve backward compatibility.
             obj = ConfigurationFacade.getInstance().getExtensions().get(FrameworkConstants.Config
-                                                                                .QNAME_EXT_POST_AUTHENTICATION_HANDLER);
+                    .QNAME_EXT_POST_AUTHENTICATION_HANDLER);
             if (obj instanceof PostAuthenticationHandler) {
                 postAuthenticationHandler = (PostAuthenticationHandler) obj;
             } else {
@@ -607,6 +609,7 @@ public class FrameworkUtils {
 
     /**
      * To get authentication cache result from cache
+     *
      * @param key
      * @return
      */
@@ -617,7 +620,8 @@ public class FrameworkUtils {
     }
 
     /**
-     *  Removes authentication result from cache.
+     * Removes authentication result from cache.
+     *
      * @param autheticationResultId
      */
     public static void removeAuthenticationResultFromCache(String autheticationResultId) {
@@ -758,7 +762,7 @@ public class FrameworkUtils {
                 continue;
             }
             claimMap.put(ClaimMapping.build(entry.getKey(), entry.getKey(), null, false),
-                         entry.getValue());
+                    entry.getValue());
         }
 
         return claimMap;
@@ -907,7 +911,7 @@ public class FrameworkUtils {
                             .get(authenticatorIdp);
 
                     if (authenticatedIdPData != null
-                        && authenticatedIdPData.getIdpName().equals(authenticatorIdp)) {
+                            && authenticatedIdPData.getIdpName().equals(authenticatorIdp)) {
                         idpAuthenticatorMap.put(authenticatorIdp, authenticatorConfig);
                         break;
                     }
@@ -975,7 +979,7 @@ public class FrameworkUtils {
 
         if (configAvailable) {
             if (action != null
-                && action.equals(FrameworkConstants.AUTH_ENDPOINT_QUERY_PARAMS_ACTION_EXCLUDE)) {
+                    && action.equals(FrameworkConstants.AUTH_ENDPOINT_QUERY_PARAMS_ACTION_EXCLUDE)) {
                 if (reqParamMap != null) {
                     for (Map.Entry<String, String[]> entry : reqParamMap.entrySet()) {
                         String paramName = entry.getKey();
@@ -1065,18 +1069,18 @@ public class FrameworkUtils {
 
         if (authenticatedSubject == null || authenticatedSubject.trim().isEmpty()) {
             throw new IllegalArgumentException("Invalid argument. authenticatedSubject : "
-                                               + authenticatedSubject);
+                    + authenticatedSubject);
         }
         if (!authenticatedSubject.contains(CarbonConstants.DOMAIN_SEPARATOR)) {
             if (UserCoreUtil.getDomainFromThreadLocal() != null
-                && !UserCoreUtil.getDomainFromThreadLocal().isEmpty()) {
+                    && !UserCoreUtil.getDomainFromThreadLocal().isEmpty()) {
                 authenticatedSubject = UserCoreUtil.getDomainFromThreadLocal()
-                                       + CarbonConstants.DOMAIN_SEPARATOR + authenticatedSubject;
+                        + CarbonConstants.DOMAIN_SEPARATOR + authenticatedSubject;
             }
         } else if (authenticatedSubject.indexOf(CarbonConstants.DOMAIN_SEPARATOR) == 0) {
             throw new IllegalArgumentException("Invalid argument. authenticatedSubject : "
-                                               + authenticatedSubject + " begins with \'" + CarbonConstants.DOMAIN_SEPARATOR
-                                               + "\'");
+                    + authenticatedSubject + " begins with \'" + CarbonConstants.DOMAIN_SEPARATOR
+                    + "\'");
         }
         return authenticatedSubject;
     }
@@ -1256,6 +1260,29 @@ public class FrameworkUtils {
         if (commonAuthIdCookieConfig.isSecure()) {
             cookieBuilder.setSecure(commonAuthIdCookieConfig.isSecure());
         }
+    }
+
+    public static String getMultiAttributeSeparator() {
+
+        String multiAttributeSeparator = null;
+        try {
+            multiAttributeSeparator = CarbonContext.getThreadLocalCarbonContext().getUserRealm().
+                    getRealmConfiguration().getUserStoreProperty(IdentityCoreConstants.MULTI_ATTRIBUTE_SEPARATOR);
+        } catch (UserStoreException e) {
+            log.warn("Error while retrieving MultiAttributeSeparator from UserRealm.");
+            if (log.isDebugEnabled()) {
+                log.debug("Error while retrieving MultiAttributeSeparator from UserRealm." + e);
+            }
+        }
+
+        if (StringUtils.isBlank(multiAttributeSeparator)) {
+            multiAttributeSeparator = IdentityCoreConstants.MULTI_ATTRIBUTE_SEPARATOR_DEFAULT;
+            if (log.isDebugEnabled()) {
+                log.debug("Multi Attribute Separator is defaulting to " + multiAttributeSeparator);
+            }
+        }
+
+        return multiAttributeSeparator;
     }
 }
 

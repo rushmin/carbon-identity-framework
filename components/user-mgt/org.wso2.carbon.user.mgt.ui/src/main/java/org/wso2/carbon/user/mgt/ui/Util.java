@@ -18,16 +18,31 @@
 
 package org.wso2.carbon.user.mgt.ui;
 
+import org.apache.axis2.context.ConfigurationContext;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.CarbonConstants;
+import org.wso2.carbon.CarbonException;
+import org.wso2.carbon.core.util.AdminServicesUtil;
+import org.wso2.carbon.core.util.CryptoException;
+import org.wso2.carbon.core.util.CryptoUtil;
 import org.wso2.carbon.identity.core.model.IdentityEventListenerConfig;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.governance.stub.bean.ConnectorConfig;
+import org.wso2.carbon.identity.governance.stub.bean.Property;
+import org.wso2.carbon.ui.CarbonUIUtil;
+import org.wso2.carbon.user.core.UserRealm;
+import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.listener.UserOperationEventListener;
+import org.wso2.carbon.user.mgt.common.DefaultPasswordGenerator;
+import org.wso2.carbon.user.mgt.common.RandomPasswordGenerator;
 import org.wso2.carbon.user.mgt.stub.types.carbon.FlaggedName;
 import org.wso2.carbon.user.mgt.stub.types.carbon.UserRealmInfo;
 import org.wso2.carbon.user.mgt.stub.types.carbon.UserStoreInfo;
+import org.wso2.carbon.user.mgt.ui.client.IdentityGovernanceAdminClient;
 import org.wso2.carbon.utils.DataPaginator;
-
+import org.wso2.carbon.utils.ServerConstants;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -39,15 +54,29 @@ import java.util.Map;
 import java.util.Properties;
 import javax.activation.DataHandler;
 import javax.mail.util.ByteArrayDataSource;
-
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpSession;
 
 public class Util {
 
     public static final String ALL = "ALL";
     private static final Log log = LogFactory.getLog(Util.class);
+    private static final String EMAIL_VERIFICATION_ENABLE_PROP_NAME = "EmailVerification.Enable";
+    private static final String ASK_PASSWORD_TEMP_PASSWORD_GENERATOR = "EmailVerification.AskPassword.PasswordGenerator";
+    // This property will be used to enable the new Ask Password feature.
+    private static final String ASK_PASSWORD_ADMIN_UI_ENABLE_PROP_NAME = "EnableAskPasswordAdminUI";
+    private static final String ENCRYPT_USERNAME_IN_URL = "encryptUsernameInUrl";
+
+    private static boolean isAskPasswordAdminUIEnabled;
     private static boolean isAskPasswordEnabled = true;
 
     static {
+
+        String isAskPasswordAdminUIEnabledProperty = IdentityUtil.getProperty(ASK_PASSWORD_ADMIN_UI_ENABLE_PROP_NAME);
+        if (StringUtils.isNotBlank(isAskPasswordAdminUIEnabledProperty)) {
+            isAskPasswordAdminUIEnabled = Boolean.parseBoolean(isAskPasswordAdminUIEnabledProperty);
+        }
+
         InputStream is = null;
         try {
             boolean identityMgtListenerEnabled = true;
@@ -198,8 +227,188 @@ public class Util {
         }
     }
 
-    public static boolean isAskPasswordEnabled(){
+    public static boolean isAskPasswordEnabled() {
         return isAskPasswordEnabled;
     }
 
+    public static boolean isUserOnBoardingEnabled(ServletContext context, HttpSession session) {
+
+        if (!isAskPasswordAdminUIEnabled) {
+            return false;
+        }
+
+        String backendServerURL = CarbonUIUtil.getServerURL(context, session);
+        String cookie = (String) session.getAttribute(ServerConstants.ADMIN_SERVICE_COOKIE);
+        ConfigurationContext configContext =
+                (ConfigurationContext) context.getAttribute(CarbonConstants.CONFIGURATION_CONTEXT);
+        Map<String, Map<String, List<ConnectorConfig>>> connectorList;
+        try {
+            IdentityGovernanceAdminClient client =
+                    new IdentityGovernanceAdminClient(cookie, backendServerURL, configContext);
+            connectorList = client.getConnectorList();
+        } catch (Exception e) {
+            log.error("Error while getting connector list from governance service, at URL :" +
+                    backendServerURL, e);
+            return false;
+        }
+
+        if (connectorList != null) {
+            for (String key : connectorList.keySet()) {
+                Map<String, List<ConnectorConfig>> subCatList = connectorList.get(key);
+                for (String subCatKey : subCatList.keySet()) {
+                    List<ConnectorConfig> connectorConfigs = subCatList.get(subCatKey);
+                    for (ConnectorConfig connectorConfig : connectorConfigs) {
+                        Property[] properties = connectorConfig.getProperties();
+                        for (Property property : properties) {
+                            if (EMAIL_VERIFICATION_ENABLE_PROP_NAME.equals(property.getName())) {
+                                String propValue = property.getValue();
+                                boolean isEmailVerificationEnabled = false;
+
+                                if (!StringUtils.isEmpty(propValue)) {
+                                    isEmailVerificationEnabled = Boolean.parseBoolean(propValue);
+                                }
+                                return isEmailVerificationEnabled;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public static char[] generateRandomPassword(ServletContext context, HttpSession session) {
+        char[] tempPass = "password".toCharArray();
+        try {
+            return getAskPasswordTempPassGenerator(context, session).generatePassword();
+        } catch (Exception e) {
+            log.error("Error while generating the temporary password. Used the default password as temp password", e);
+            return tempPass;
+        }
+    }
+
+    public static RandomPasswordGenerator getAskPasswordTempPassGenerator(ServletContext context, HttpSession session) {
+
+        if (!isAskPasswordAdminUIEnabled) {
+            return new DefaultPasswordGenerator();
+        }
+
+        String randomPasswordGenerationClass = "org.wso2.carbon.user.mgt.common.DefaultPasswordGenerator";
+
+        if (isUserOnBoardingEnabled(context, session)) {
+
+            String backendServerURL = CarbonUIUtil.getServerURL(context, session);
+            String cookie = (String) session.getAttribute(ServerConstants.ADMIN_SERVICE_COOKIE);
+            ConfigurationContext configContext =
+                    (ConfigurationContext) context.getAttribute(CarbonConstants.CONFIGURATION_CONTEXT);
+            Map<String, Map<String, List<ConnectorConfig>>> connectorList;
+            try {
+                IdentityGovernanceAdminClient client =
+                        new IdentityGovernanceAdminClient(cookie, backendServerURL, configContext);
+                connectorList = client.getConnectorList();
+
+                if (connectorList != null) {
+                    for (String key : connectorList.keySet()) {
+                        Map<String, List<ConnectorConfig>> subCatList = connectorList.get(key);
+                        for (String subCatKey : subCatList.keySet()) {
+                            List<ConnectorConfig> connectorConfigs = subCatList.get(subCatKey);
+                            for (ConnectorConfig connectorConfig : connectorConfigs) {
+                                Property[] properties = connectorConfig.getProperties();
+                                for (Property property : properties) {
+                                    if (ASK_PASSWORD_TEMP_PASSWORD_GENERATOR.equals(property.getName())) {
+                                        randomPasswordGenerationClass = property.getValue();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Error while getting connector list from governance service, at URL :" +
+                        backendServerURL, e);
+            }
+
+        } else {
+            String randomPasswordGenerationClassFromFile =
+                    IdentityUtil.getProperty(ASK_PASSWORD_TEMP_PASSWORD_GENERATOR);
+            if (StringUtils.isNotBlank(randomPasswordGenerationClassFromFile)) {
+                randomPasswordGenerationClass = randomPasswordGenerationClassFromFile;
+            }
+        }
+
+        try {
+            Class clazz = Class.forName(randomPasswordGenerationClass);
+            return (RandomPasswordGenerator) clazz.newInstance();
+        } catch (Exception e) {
+            log.error("Error while loading random password generator class. " +
+                    "Default random password generator would be used", e);
+        }
+
+        return new DefaultPasswordGenerator();
+    }
+
+    /**
+     * Encrypt and Base64 encode the username with Carbon server's public key, if usernameEncryptionInUrl property is
+     * set to true in user-mgt.xml, else return the username without encrypting.
+     *
+     * @param username Username to encrypt
+     * @return Encrypted and base64Encoded username if usernameEncryptionInUrl property is set to true user-mgt.xml,
+     * else return the username without encrypting
+     * @throws UserManagementUIException
+     */
+    public static String getEncryptedAndBase64encodedUsername(String username) throws UserManagementUIException {
+        String encryptedAndBase64EncodedUsername = null;
+        try {
+            if (StringUtils.isNotBlank(username)) {
+                boolean isUsernameEncryptionEnabled = isUsernameEncryptionEnabled();
+                if (isUsernameEncryptionEnabled) {
+                    encryptedAndBase64EncodedUsername = CryptoUtil.getDefaultCryptoUtil().
+                            encryptAndBase64Encode(username.getBytes());
+                } else {
+                    return username;
+                }
+            }
+        } catch (CryptoException e) {
+            log.error(String.format("Error while trying to encrypt the username : '%s' ", username), e);
+            throw new UserManagementUIException(e);
+        } catch (CarbonException | UserStoreException e) {
+            log.error("Error while trying to get User Realm", e);
+            throw new UserManagementUIException("Error while trying to get UserRealm", e);
+        }
+
+        return encryptedAndBase64EncodedUsername;
+    }
+
+    /**
+     * Decrypt the encrypted username using Carbon server's private key.
+     *
+     * @param encryptedAndBase64EncodedUsername Encrypted username which is encrypted by Carbon server's private key
+     * @return Decrypted username if usernameEncryptionInUrl property is set to true user-mgt.xml, else return the
+     * provided input parameter as it is.
+     * @throws UserManagementUIException
+     */
+    public static String getDecryptedUsername(String encryptedAndBase64EncodedUsername) throws UserManagementUIException {
+        try {
+            boolean isUsernameEncryptionEnabled = isUsernameEncryptionEnabled();
+            if (isUsernameEncryptionEnabled) {
+                return new String(CryptoUtil.getDefaultCryptoUtil().base64DecodeAndDecrypt(encryptedAndBase64EncodedUsername));
+            } else {
+                return encryptedAndBase64EncodedUsername;
+            }
+        } catch (CryptoException e) {
+            String message = String.format("Error while trying to decrypt the username : '%s' ",
+                    encryptedAndBase64EncodedUsername);
+            log.error(message, e);
+            throw new UserManagementUIException(message, e);
+        } catch (CarbonException | UserStoreException e) {
+            String message = "Error while trying to get User Realm";
+            log.error(message, e);
+            throw new UserManagementUIException(message, e);
+        }
+    }
+
+    private static boolean isUsernameEncryptionEnabled() throws CarbonException, UserStoreException {
+        return Boolean.parseBoolean(AdminServicesUtil.getUserRealm().getRealmConfiguration()
+                .getRealmProperties().get(ENCRYPT_USERNAME_IN_URL));
+    }
 }

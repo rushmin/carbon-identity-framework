@@ -1,7 +1,3 @@
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%@ taglib uri="http://wso2.org/projects/carbon/taglibs/carbontags.jar" prefix="carbon" %>
-<%@ page import="org.wso2.carbon.ui.CarbonUIUtil" %>
-<%@ page import="org.owasp.encoder.Encode" %>
 <%--
    ~ Copyright (c) 2008, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
    ~
@@ -19,6 +15,12 @@
    ~  specific language governing permissions and limitations
    ~  under the License.
 --%>
+
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib uri="http://wso2.org/projects/carbon/taglibs/carbontags.jar" prefix="carbon" %>
+<%@ taglib uri="http://www.owasp.org/index.php/Category:OWASP_CSRFGuard_Project/Owasp.CsrfGuard.tld" prefix="csrf" %>
+<%@ page import="org.wso2.carbon.ui.CarbonUIUtil" %>
+<%@ page import="org.owasp.encoder.Encode" %>
 
 <%--<link rel="stylesheet" type="text/css" href="../admin/css/main.css"/>--%>
 <link rel="stylesheet" type="text/css" href="css/local-styles.css"/>
@@ -159,6 +161,9 @@
 %>
 
 <script type="text/javascript">
+    var tName = "<csrf:tokenname/>";
+    var tValue = "<csrf:tokenvalue/>";
+
     wso2.wsf.Util.initURLs();
     wso2.wsf.XSLTHelper.init();
     window.dhtmlHistory.initialize();

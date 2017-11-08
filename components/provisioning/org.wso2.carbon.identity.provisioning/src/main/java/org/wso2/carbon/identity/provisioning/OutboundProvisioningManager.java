@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.provisioning;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.CarbonException;
@@ -678,15 +679,48 @@ public class OutboundProvisioningManager {
     private void updateProvisioningUserWithMappedRoles(ProvisioningEntity provisioningEntity,
                                                        RoleMapping[] idPRoleMapping) {
 
-        if (provisioningEntity.getEntityType() != ProvisioningEntityType.USER
-            || idPRoleMapping == null || idPRoleMapping.length == 0) {
+        if (ArrayUtils.isEmpty(idPRoleMapping)) {
             return;
         }
 
-        List<String> userGroups = getGroupNames(provisioningEntity.getAttributes());
+        updateMappedGroupForAttribute(provisioningEntity, idPRoleMapping,
+                IdentityProvisioningConstants.GROUP_CLAIM_URI);
+        updateMappedGroupForAttribute(provisioningEntity, idPRoleMapping,
+                IdentityProvisioningConstants.NEW_GROUP_CLAIM_URI);
+        updateMappedGroupForAttribute(provisioningEntity, idPRoleMapping,
+                IdentityProvisioningConstants.DELETED_GROUP_CLAIM_URI);
 
-        if (CollectionUtils.isEmpty(userGroups)) {
-            return;
+    }
+
+    /**
+     * Update the value of given group attribute with mapped roles
+     *
+     * @param provisioningEntity
+     * @param idPRoleMapping
+     * @param groupAttributeName
+     */
+    private void updateMappedGroupForAttribute(ProvisioningEntity provisioningEntity, RoleMapping[] idPRoleMapping,
+                                               String groupAttributeName) {
+
+        List<String> groupList = ProvisioningUtil.getClaimValues(provisioningEntity.getAttributes(),
+                groupAttributeName, null);
+        List<String> mappedGroups = getMappedGroups(groupList, idPRoleMapping);
+
+        if (mappedGroups != null && !mappedGroups.isEmpty()) {
+            ProvisioningUtil.setClaimValue(groupAttributeName, provisioningEntity.getAttributes(), mappedGroups);
+        }
+    }
+
+    /**
+     * Get mapped idp roles for given role list
+     * @param groupList
+     * @param idPRoleMapping
+     * @return
+     */
+    private List<String> getMappedGroups(List<String> groupList, RoleMapping[] idPRoleMapping) {
+
+        if (CollectionUtils.isEmpty(groupList)) {
+            return new ArrayList<>();
         }
 
         Map<String, String> mappedRoles = new HashMap<>();
@@ -697,17 +731,14 @@ public class OutboundProvisioningManager {
 
         List<String> mappedUserGroups = new ArrayList<>();
 
-        for (Iterator<String> iterator = userGroups.iterator(); iterator.hasNext(); ) {
+        for (Iterator<String> iterator = groupList.iterator(); iterator.hasNext(); ) {
             String userGroup = iterator.next();
             String mappedGroup = null;
             if ((mappedGroup = mappedRoles.get(userGroup)) != null) {
                 mappedUserGroups.add(mappedGroup);
             }
         }
-
-        ProvisioningUtil.setClaimValue(IdentityProvisioningConstants.GROUP_CLAIM_URI,
-                                       provisioningEntity.getAttributes(), mappedUserGroups);
-
+        return mappedUserGroups;
     }
 
     /**

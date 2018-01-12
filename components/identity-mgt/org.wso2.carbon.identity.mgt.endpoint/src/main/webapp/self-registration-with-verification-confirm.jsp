@@ -53,7 +53,7 @@
     try {
         SelfRegisterApi selfRegisterApi = new SelfRegisterApi();
         CodeValidationRequest validationRequest = new CodeValidationRequest();
-        List<Property> properties = new ArrayList<>();
+        List<Property> properties = new ArrayList<Property>();
         Property tenantDomainProperty = new Property();
         tenantDomainProperty.setKey(MultitenantConstants.TENANT_DOMAIN);
         tenantDomainProperty.setValue(tenantdomain);

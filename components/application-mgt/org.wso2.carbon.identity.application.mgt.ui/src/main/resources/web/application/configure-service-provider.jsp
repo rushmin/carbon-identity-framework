@@ -800,6 +800,21 @@ function updateBeanAndPostTo(postURL, data) {
                             </div>
                         </td>
                     </tr>
+                    <%
+                        // Add the certificate UI only if the needed database schema is there.
+                        if (appBean.getServiceProvider().getPerSPCertificateSupportAvailable()) {
+                    %>
+                    <tr>
+                        <td style="width:15%" class="leftCol-med labelField">Application Certificate:</td>
+                        <td>
+                            <textarea style="width:50%" type="text" name="sp-certificate" id="sp-description" class="text-box-big"><%=appBean.getServiceProvider().getCertificateContent() != null ? Encode.forHtmlContent(appBean.getServiceProvider().getCertificateContent()) : "" %></textarea>
+                            <div class="sectionHelp">
+                            <fmt:message key='help.certificate'/>
+                            </div>
+                        </td>
+                    </tr>
+                    <% }
+                    %>
                     <tr>
                     	<td class="leftCol-med">
                              <label for="isSaasApp"><fmt:message key="config.application.isSaasApp"/></label>

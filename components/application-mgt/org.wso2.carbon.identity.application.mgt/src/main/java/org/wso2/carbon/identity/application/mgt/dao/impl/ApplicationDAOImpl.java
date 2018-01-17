@@ -65,6 +65,7 @@ import org.wso2.carbon.identity.core.CertificateRetrievingException;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.user.api.Tenant;
 import org.wso2.carbon.user.api.UserStoreException;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
 import org.wso2.carbon.utils.DBUtils;
@@ -414,6 +415,7 @@ public class ApplicationDAOImpl implements ApplicationDAO {
                                               Connection connection) throws SQLException {
 
         // If the certificate content is empty, remove the certificate reference property if exists.
+        // And remove the certificate.
         if (StringUtils.isBlank(serviceProvider.getCertificateContent())) {
 
             ServiceProviderProperty[] serviceProviderProperties = serviceProvider.getSpProperties();
@@ -422,9 +424,11 @@ public class ApplicationDAOImpl implements ApplicationDAO {
 
                 // Get the index of the certificate reference property index in the properties array.
                 int certificateReferenceIdIndex = -1;
+                String certificateReferenceId = null;
                 for (int i = 0; i < serviceProviderProperties.length; i++) {
                     if ("CERTIFICATE".equals(serviceProviderProperties[i].getName())) {
                         certificateReferenceIdIndex = i;
+                        certificateReferenceId = serviceProviderProperties[i].getValue();
                         break;
                     }
                 }
@@ -444,6 +448,7 @@ public class ApplicationDAOImpl implements ApplicationDAO {
                             propertiesWithoutCertificateReference.length - certificateReferenceIdIndex);
 
                     serviceProvider.setSpProperties(propertiesWithoutCertificateReference);
+                    deleteCertificate(connection, Integer.parseInt(certificateReferenceId));
                 }
             }
         } else {
@@ -2705,6 +2710,10 @@ public class ApplicationDAOImpl implements ApplicationDAO {
         // Now, delete the application
         PreparedStatement deleteClientPrepStmt = null;
         try {
+
+            // Delete the application certificate if there is any.
+            deleteCertificate(connection, appName, tenantID);
+
             // First, delete all the clients of the application
             int applicationID = getApplicationIDByName(appName, tenantID, connection);
             InboundAuthenticationConfig clients = getInboundAuthenticationConfig(applicationID,
@@ -2724,8 +2733,16 @@ public class ApplicationDAOImpl implements ApplicationDAO {
                 connection.commit();
             }
 
-        } catch (SQLException e) {
-            throw new IdentityApplicationManagementException("Error deleting application", e);
+        } catch (SQLException | UserStoreException | IdentityApplicationManagementException e) {
+            if (connection != null) {
+                try {
+                    connection.rollback();
+                } catch (SQLException ignore) {
+                }
+            }
+            String errorMessege = "An error occured while delete the application : " + appName;
+            log.error(errorMessege, e);
+            throw new IdentityApplicationManagementException(errorMessege, e);
         } finally {
             IdentityApplicationManagementUtil.closeStatement(deleteClientPrepStmt);
             IdentityApplicationManagementUtil.closeConnection(connection);
@@ -2936,6 +2953,55 @@ public class ApplicationDAOImpl implements ApplicationDAO {
             deleteRoleMappingPrepStmt.execute();
         } finally {
             IdentityApplicationManagementUtil.closeStatement(deleteRoleMappingPrepStmt);
+        }
+    }
+
+    /**
+     *
+     * Delete the certificate of the given application if there is one.
+     *
+     * @param connection
+     * @param appName
+     * @param tenantID
+     * @throws UserStoreException
+     * @throws IdentityApplicationManagementException
+     * @throws SQLException
+     */
+    private void deleteCertificate(Connection connection, String appName, int tenantID)
+            throws UserStoreException, IdentityApplicationManagementException, SQLException {
+
+
+        String tenantDomain = MultitenantConstants.SUPER_TENANT_DOMAIN_NAME;
+
+        if(tenantID != MultitenantConstants.SUPER_TENANT_ID){
+            Tenant tenant = ApplicationManagementServiceComponentHolder.getInstance().getRealmService()
+                    .getTenantManager().getTenant(tenantID);
+            tenantDomain = tenant.getDomain();
+        }
+
+        ServiceProvider application = getApplication(appName, tenantDomain);
+        String certificateReferenceID = getCertificateReferenceID(application.getSpProperties());
+
+        if (certificateReferenceID != null) {
+            deleteCertificate(connection, Integer.parseInt(certificateReferenceID));
+        }
+    }
+
+    /**
+     * Deletes the certificate for given ID from the database.
+     * @param connection
+     * @param id
+     */
+    private void deleteCertificate(Connection connection, int id) throws SQLException {
+
+        PreparedStatement statementToRemoveCertificate = null;
+        try{
+
+            statementToRemoveCertificate = connection.prepareStatement(ApplicationMgtDBQueries.REMOVE_CERTIFICATE);
+            statementToRemoveCertificate.setInt(1, id);
+            statementToRemoveCertificate.execute();
+        } finally {
+            IdentityApplicationManagementUtil.closeStatement(statementToRemoveCertificate);
         }
     }
 

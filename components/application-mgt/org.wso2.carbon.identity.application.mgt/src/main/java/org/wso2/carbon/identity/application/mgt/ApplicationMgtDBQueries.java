@@ -173,6 +173,7 @@ public class ApplicationMgtDBQueries {
 
     public static final String GET_CERTIFICATE_ID_BY_NAME = "SELECT ID FROM IDN_CERTIFICATE WHERE NAME = ? AND " +
             "TENANT_ID = ?";
+    public static final String REMOVE_CERTIFICATE = "DELETE FROM IDN_CERTIFICATE WHERE ID = ?";
     public static final String CHECK_AVAILABILITY_OF_IDN_CERTIFICATE_TABLE_MYSQL = "SELECT ID FROM IDN_CERTIFICATE " +
             "LIMIT 1";
     public static final String CHECK_AVAILABILITY_OF_IDN_CERTIFICATE_TABLE_DB2SQL = "SELECT ID FROM IDN_CERTIFICATE " +

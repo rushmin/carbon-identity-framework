@@ -33,6 +33,12 @@
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.ResourceBundle" %>
+<%@ page import="org.wso2.carbon.identity.claim.metadata.mgt.stub.dto.LocalClaimDTO" %>
+<%@ page import="org.wso2.carbon.identity.claim.metadata.mgt.stub.dto.ClaimPropertyDTO" %>
+<%@page import="org.apache.log4j.Logger"%>
+<%@ page
+        import="org.wso2.carbon.identity.claim.metadata.mgt.stub.ClaimMetadataManagementServiceClaimMetadataException" %>
+<%@ page import="org.wso2.carbon.user.mgt.ui.client.ClaimDataAdminClient" %>
 <jsp:useBean id="userBean"
              type="org.wso2.carbon.user.mgt.ui.UserBean"
              class="org.wso2.carbon.user.mgt.ui.UserBean" scope="session"/>
@@ -45,7 +51,9 @@
     UserStoreInfo userStoreInfo = null;
     UserRealmInfo userRealmInfo = null;
     UserStoreInfo[] allUserStoreInfo = null;
-
+    Logger logger = Logger.getLogger(this.getClass());
+    String REGULAR_EXPRESSION_PROPERTY = "RegEx";
+    
     List<String> domainNames = null;
     String selectedDomain = null;
     boolean isAskPasswordEnabled = false;
@@ -232,7 +240,38 @@
                     return false;
                 }
             } else {
-                var emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+                <%
+                String pattern = "";
+                ClaimDataAdminClient claimDataAdminClient = new ClaimDataAdminClient((String)
+                session.getAttribute(ServerConstants.ADMIN_SERVICE_COOKIE),
+                CarbonUIUtil.getServerURL(config.getServletContext(), session),
+                (ConfigurationContext) config.getServletContext().getAttribute(CarbonConstants.CONFIGURATION_CONTEXT));
+                LocalClaimDTO[] localClaims  = new LocalClaimDTO[0];
+                try {
+                    localClaims = claimDataAdminClient.getLocalClaims();
+                }
+                catch (ClaimMetadataManagementServiceClaimMetadataException e) {
+                    logger.error("Error while getting local claims", e);
+                }
+                for(LocalClaimDTO localClaim: localClaims){
+                    if (localClaim.getLocalClaimURI().equals("http://wso2.org/claims/emailaddress")) {
+                        ClaimPropertyDTO[] claimPropertyDTOS = localClaim.getClaimProperties();
+                        for(ClaimPropertyDTO claimPropertyDTO: claimPropertyDTOS){
+                         if (claimPropertyDTO.getPropertyName().equals
+                         (REGULAR_EXPRESSION_PROPERTY)) {
+                                pattern = claimPropertyDTO.getPropertyValue();
+                                pattern = "/" + pattern + "/";
+                            }
+                        }
+                    }
+                }
+                %>
+                var emailPattern = "";
+                if (<%=pattern.isEmpty()%>) {
+                    emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+                } else {
+                    emailPattern = <%=pattern%>;
+                }
                 reason = validateString("email", emailPattern);
                 if (reason != "") {
                     if (reason == "Empty string") {

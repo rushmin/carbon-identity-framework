@@ -35,10 +35,11 @@
 <%@ page import="java.util.ResourceBundle" %>
 <%@ page import="org.wso2.carbon.identity.claim.metadata.mgt.stub.dto.LocalClaimDTO" %>
 <%@ page import="org.wso2.carbon.identity.claim.metadata.mgt.stub.dto.ClaimPropertyDTO" %>
-<%@page import="org.apache.log4j.Logger"%>
+<%@ page import="org.apache.log4j.Logger"%>
 <%@ page
         import="org.wso2.carbon.identity.claim.metadata.mgt.stub.ClaimMetadataManagementServiceClaimMetadataException" %>
 <%@ page import="org.wso2.carbon.user.mgt.ui.client.ClaimDataAdminClient" %>
+<%@ page import="org.wso2.carbon.identity.claim.metadata.mgt.util.ClaimConstants" %>
 <jsp:useBean id="userBean"
              type="org.wso2.carbon.user.mgt.ui.UserBean"
              class="org.wso2.carbon.user.mgt.ui.UserBean" scope="session"/>
@@ -47,12 +48,15 @@
 
 <script type="text/javascript" src="../userstore/extensions/js/vui.js"></script>
 <script type="text/javascript" src="../admin/js/main.js"></script>
+
+<%!
+    private static final String EMAIL_CLAIM = "http://wso2.org/claims/emailaddress";
+%>
 <%
     UserStoreInfo userStoreInfo = null;
     UserRealmInfo userRealmInfo = null;
     UserStoreInfo[] allUserStoreInfo = null;
     Logger logger = Logger.getLogger(this.getClass());
-    String REGULAR_EXPRESSION_PROPERTY = "RegEx";
     
     List<String> domainNames = null;
     String selectedDomain = null;
@@ -246,32 +250,38 @@
                 session.getAttribute(ServerConstants.ADMIN_SERVICE_COOKIE),
                 CarbonUIUtil.getServerURL(config.getServletContext(), session),
                 (ConfigurationContext) config.getServletContext().getAttribute(CarbonConstants.CONFIGURATION_CONTEXT));
-                LocalClaimDTO[] localClaims  = new LocalClaimDTO[0];
                 try {
-                    localClaims = claimDataAdminClient.getLocalClaims();
-                }
-                catch (ClaimMetadataManagementServiceClaimMetadataException e) {
-                    logger.error("Error while getting local claims", e);
-                }
-                for(LocalClaimDTO localClaim: localClaims){
-                    if (localClaim.getLocalClaimURI().equals("http://wso2.org/claims/emailaddress")) {
-                        ClaimPropertyDTO[] claimPropertyDTOS = localClaim.getClaimProperties();
-                        for(ClaimPropertyDTO claimPropertyDTO: claimPropertyDTOS){
-                         if (claimPropertyDTO.getPropertyName().equals
-                         (REGULAR_EXPRESSION_PROPERTY)) {
-                                pattern = claimPropertyDTO.getPropertyValue();
-                                pattern = "/" + pattern + "/";
+                    loop: for(LocalClaimDTO localClaim : claimDataAdminClient.getLocalClaims()){
+                        if (EMAIL_CLAIM.equals(localClaim.getLocalClaimURI())) {
+                            ClaimPropertyDTO[] claimPropertyDTOs = localClaim.getClaimProperties();
+                            if (claimPropertyDTOs != null) {
+                                for (ClaimPropertyDTO claimPropertyDTO : claimPropertyDTOs){
+                                    if (ClaimConstants.REGULAR_EXPRESSION_PROPERTY.equals(claimPropertyDTO.getPropertyName())) {
+                                        pattern = claimPropertyDTO.getPropertyValue();
+                                        pattern = "/" + pattern + "/";
+                                        break loop;
+                                    }
+                                }
                             }
                         }
                     }
                 }
-                %>
-                var emailPattern = "";
-                if (<%=pattern.isEmpty()%>) {
-                    emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-                } else {
-                    emailPattern = <%=pattern%>;
+                catch (ClaimMetadataManagementServiceClaimMetadataException e) {
+                    logger.error("Error while getting local claims", e);
                 }
+                %>
+                var emailPattern;
+                <%
+                if (pattern.isEmpty() || pattern.length() == 2) {
+                %>
+                emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+                <%
+                } else {
+                %>
+                emailPattern = <%=pattern%>;
+                <%
+                }
+                %>
                 reason = validateString("email", emailPattern);
                 if (reason != "") {
                     if (reason == "Empty string") {

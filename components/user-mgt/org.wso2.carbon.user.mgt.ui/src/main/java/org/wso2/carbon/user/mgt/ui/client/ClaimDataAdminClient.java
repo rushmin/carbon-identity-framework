@@ -20,8 +20,6 @@ import org.apache.axis2.AxisFault;
 import org.apache.axis2.client.Options;
 import org.apache.axis2.client.ServiceClient;
 import org.apache.axis2.context.ConfigurationContext;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.claim.metadata.mgt.stub.ClaimMetadataManagementServiceClaimMetadataException;
 import org.wso2.carbon.identity.claim.metadata.mgt.stub.ClaimMetadataManagementServiceStub;
 import org.wso2.carbon.identity.claim.metadata.mgt.stub.dto.LocalClaimDTO;
@@ -33,8 +31,8 @@ import java.rmi.RemoteException;
  */
 public class ClaimDataAdminClient {
 
-    private static final Log log = LogFactory.getLog(ClaimDataAdminClient.class);
     private ClaimMetadataManagementServiceStub stub;
+    private static final String SERVICE = "ClaimMetadataManagementService";
 
     /**
      * Instantiates ClaimMetadataAdminClient
@@ -47,7 +45,7 @@ public class ClaimDataAdminClient {
     public ClaimDataAdminClient(String cookie, String backendServerURL, ConfigurationContext configCtx) throws
             AxisFault {
 
-        String serviceURL = backendServerURL + "ClaimMetadataManagementService";
+        String serviceURL = backendServerURL + SERVICE;
         stub = new ClaimMetadataManagementServiceStub(configCtx, serviceURL);
         ServiceClient client = stub._getServiceClient();
         Options option = client.getOptions();
@@ -55,16 +53,12 @@ public class ClaimDataAdminClient {
         option.setProperty(org.apache.axis2.transport.http.HTTPConstants.COOKIE_STRING, cookie);
     }
 
-    public LocalClaimDTO[] getLocalClaims() throws RemoteException,
-            ClaimMetadataManagementServiceClaimMetadataException {
-        try {
-            return stub.getLocalClaims();
-        } catch (RemoteException e) {
-            log.error(e.getMessage(), e);
-            throw e;
-        } catch (ClaimMetadataManagementServiceClaimMetadataException e) {
-            log.error(e.getMessage(), e);
-            throw e;
+    public LocalClaimDTO[] getLocalClaims() throws RemoteException, ClaimMetadataManagementServiceClaimMetadataException {
+
+        LocalClaimDTO[] localClaimDTOs = stub.getLocalClaims();
+        if (localClaimDTOs == null) {
+            localClaimDTOs = new LocalClaimDTO[0];
         }
+        return localClaimDTOs;
     }
 }

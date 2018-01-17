@@ -45,6 +45,7 @@ import java.sql.SQLException;
 
 public class SAMLSSOServiceProviderDAO extends AbstractDAO<SAMLSSOServiceProviderDO> {
 
+    private static final String CERTIFICATE_PROPERTY_NAME = "CERTIFICATE";
     private static String QUERY_TO_GET_APPLICATION_CERTIFICATE_ID = "SELECT " +
             "META.VALUE " +
             "FROM " +
@@ -53,7 +54,7 @@ public class SAMLSSOServiceProviderDAO extends AbstractDAO<SAMLSSOServiceProvide
             "SP_METADATA META " +
             "WHERE SP.ID = INBOUND.APP_ID AND " +
             "SP.ID = META.SP_ID AND " +
-            "META.NAME = \"CERTIFICATE\" AND " +
+            "META.NAME = ? AND " +
             "INBOUND.INBOUND_AUTH_KEY = ?";
 
     private static Log log = LogFactory.getLog(SAMLSSOServiceProviderDAO.class);
@@ -497,7 +498,8 @@ public class SAMLSSOServiceProviderDAO extends AbstractDAO<SAMLSSOServiceProvide
 
         try {
             statementToGetApplicationCertificate = connection.prepareStatement(QUERY_TO_GET_APPLICATION_CERTIFICATE_ID);
-            statementToGetApplicationCertificate.setString(1, issuer);
+            statementToGetApplicationCertificate.setString(1, CERTIFICATE_PROPERTY_NAME);
+            statementToGetApplicationCertificate.setString(2, issuer);
 
             queryResults = statementToGetApplicationCertificate.executeQuery();
 

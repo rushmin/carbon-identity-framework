@@ -113,6 +113,8 @@ public class IdentityUtil {
     private static Document importerDoc = null;
     private static ThreadLocal<IdentityErrorMsgContext> IdentityError = new ThreadLocal<IdentityErrorMsgContext>();
     private static final int ENTITY_EXPANSION_LIMIT = 0;
+    public static final String PEM_BEGIN_CERTFICATE = "-----BEGIN CERTIFICATE-----";
+    public static final String PEM_END_CERTIFICATE = "-----END CERTIFICATE-----";
 
     /**
      * @return
@@ -965,5 +967,46 @@ public class IdentityUtil {
             return Boolean.parseBoolean(enableSelfSignEPUpUrlProperty);
         }
         return false;
+    }
+
+     /**
+     *
+     * Converts and returns a {@link Certificate} object for given PEM content.
+     *
+     * @param certificateContent
+     * @return
+     * @throws CertificateException
+     */
+    public static Certificate convertPEMEncodedContentToCertificate(String certificateContent) throws CertificateException {
+
+        certificateContent = StringUtils.stripEnd(StringUtils.stripStart(certificateContent, PEM_BEGIN_CERTFICATE),
+                PEM_END_CERTIFICATE);
+        byte[] bytes = org.apache.axiom.om.util.Base64.decode(certificateContent);
+        CertificateFactory factory = CertificateFactory.getInstance("X.509");
+        X509Certificate certificate = (X509Certificate) factory.generateCertificate(new ByteArrayInputStream(bytes));
+        return certificate;
+    }
+
+    /**
+     * Checks whether the PEM content is valid.
+     *
+     * For now only checks whether the certificate is not malformed.
+     *
+     * @param certificateContent PEM content to be validated.
+     * @return true if the content is not malformed, false otherwise.
+     */
+    public static boolean isValidPEMCertificate(String certificateContent) {
+
+        // Empty content is a valid input since it means no certificate. We only validate if the content is there.
+        if (StringUtils.isBlank(certificateContent)) {
+            return true;
+        }
+
+        try {
+            convertPEMEncodedContentToCertificate(certificateContent);
+            return true;
+        } catch (CertificateException e) {
+            return false;
+        }
     }
 }

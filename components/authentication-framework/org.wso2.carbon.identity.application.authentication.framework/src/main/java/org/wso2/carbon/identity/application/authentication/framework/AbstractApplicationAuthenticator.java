@@ -148,6 +148,7 @@ public abstract class AbstractApplicationAuthenticator implements ApplicationAut
             boolean isFederated = this instanceof FederatedApplicationAuthenticator;
             Map<String, Object> paramMap = new HashMap<>();
             paramMap.put(FrameworkConstants.AnalyticsAttributes.USER, user);
+            paramMap.put(FrameworkConstants.AUTHENTICATOR, getName());
             if (isFederated) {
                 // Setting this value to authentication context in order to use in AuthenticationSuccess Event
                 context.setProperty(FrameworkConstants.AnalyticsAttributes.HAS_FEDERATED_STEP, true);

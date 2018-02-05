@@ -19,26 +19,36 @@
 <%@ page import="org.wso2.carbon.identity.application.authentication.endpoint.util.Constants" %>
 <%@ page import="org.owasp.encoder.Encode" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<jsp:directive.include file="localize.jsp"/>
 
 <%
     String stat = request.getParameter(Constants.STATUS);
     String statusMessage = request.getParameter(Constants.STATUS_MSG);
 
+    String errorStat = stat;
+    String errorMsg = statusMessage;
+
     boolean unrecognizedStatus = true;
-    if (stat.equals("Error when processing the authentication request!") ||
-            stat.equals("Not a valid SAML 2.0 Request Message!")) {
+    if (stat.equals("Error when processing the authentication request!")) {
+        errorStat = "error.when.processing.authentication.request";
+        unrecognizedStatus = false;
+    } else if (stat.equals("Not a valid SAML 2.0 Request Message!")) {
+        errorStat = "not.a.valid.saml.2.0.request";
         unrecognizedStatus = false;
     }
 
     boolean unrecognizedStatusMsg = true;
-    if (statusMessage.equals("Please try login again.") ||
-            statusMessage.equals("The message was not recognized by the SAML 2.0 SSO Provider. Please check the logs for more details")) {
+    if (statusMessage.equals("Please try login again.")) {
+        errorMsg = "please.try.login.again";
+        unrecognizedStatusMsg = false;
+    } else if (statusMessage.equals("The message was not recognized by the SAML 2.0 SSO Provider. Please check the logs for more details")) {
+        errorMsg = "the.msg,was.not.recognized.by.the.saml.sso.provider";
         unrecognizedStatusMsg = false;
     }
 
     if (stat == null || statusMessage == null || unrecognizedStatus || unrecognizedStatusMsg) {
-        stat = "Authentication Error !";
-        statusMessage = "Something went wrong during the authentication process. Please try signing in again.";
+        errorStat = "authentication.error";
+        errorMsg = "something.went.wrong.during.authentication";
     }
     session.invalidate();
 %>
@@ -53,25 +63,22 @@
     }
 </style>
 
-<fmt:bundle basename="org.wso2.carbon.identity.application.authentication.endpoint.i18n.Resources">
-    <div id="middle">
-        <h2><fmt:message key='saml.sso'/></h2>
-
-        <div id="workArea">
-            <div class="info-box">
-                <%=Encode.forHtml(stat)%>
-            </div>
-            <table class="styledLeft">
-                <tbody>
-                <tr>
-                    <td><%=Encode.forHtmlContent(statusMessage)%>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+<div id="middle">
+    <h2><%=AuthenticationEndpointUtil.i18n(resourceBundle, "saml.sso")%></h2>
+    <div id="workArea">
+        <div class="info-box">
+            <%=AuthenticationEndpointUtil.i18n(resourceBundle, errorStat)%>
         </div>
+        <table class="styledLeft">
+            <tbody>
+            <tr>
+                <td><%=AuthenticationEndpointUtil.i18n(resourceBundle, errorMsg)%>
+                </td>
+            </tr>
+            </tbody>
+        </table>
     </div>
-</fmt:bundle>
+</div>
 
 
 

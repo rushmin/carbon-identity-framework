@@ -21,18 +21,14 @@
 <%@page import="java.util.Arrays" %>
 <%@ page import="org.owasp.encoder.Encode" %>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.List" %>
 <%@ page import="org.wso2.carbon.identity.application.authentication.endpoint.util.TenantDataManager" %>
 <%@ page import="java.util.ResourceBundle" %>
 <%@ page import="org.wso2.carbon.identity.core.util.IdentityCoreConstants" %>
-
-<fmt:bundle basename="org.wso2.carbon.identity.application.authentication.endpoint.i18n.Resources">
+<jsp:directive.include file="localize.jsp"/>
 
     <%
-        String BUNDLE = "org.wso2.carbon.identity.application.authentication.endpoint.i18n.Resources";
-        ResourceBundle resourceBundle = ResourceBundle.getBundle(BUNDLE, request.getLocale());
 
         String[] missingClaimList = null;
         String appName = null;
@@ -76,7 +72,7 @@
                 <a href="#">
                     <img src="images/logo-inverse.svg" alt="wso2" title="wso2" class="logo">
 
-                    <h1><em>Identity Server</em></h1>
+                    <h1><em><%=AuthenticationEndpointUtil.i18n(resourceBundle, "identity.server")%> </em></h1>
                 </a>
             </div>
         </div>
@@ -87,20 +83,24 @@
             <!-- content -->
             <div class="col-xs-12 col-sm-10 col-md-8 col-lg-5 col-centered wr-login">
                 <form action="../commonauth" method="post" id="claimForm">
-                    <h2 class="wr-title uppercase blue-bg padding-double white boarder-bottom-blue margin-none"> Provide Mandatory Details</h2>
+                    <h2 class="wr-title uppercase blue-bg padding-double white boarder-bottom-blue margin-none">
+                        <%=AuthenticationEndpointUtil.i18n(resourceBundle, "provide.mandatory.details")%>
+                    </h2>
 
                     <div class="clearfix"></div>
                     <div class="boarder-all ">
 
-			<div class="padding-double font-large">You are trying to login to <%=appName%> application, but it needs following information filled in the user profile.
-			You can fill those below and proceed with the authentication. But it is advised to fill these information in your Identity Provider profile in order to avoid this step every time you login</div>
+			<div class="padding-double font-large">
+                <%=appName%> <%=AuthenticationEndpointUtil.i18n(resourceBundle, "requested.claims.recommendation")%>
+            </div>
 
                         <!-- validation -->
                         <div class="padding-double">
 				<% for (String claim : missingClaimList) { %>
 				    <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 form-group required">
 			                <label class="control-label"><%=claim%></label>
-			                <input type="text" name="claim_mand_<%=claim%>" id="claim_mand_<%=claim%>" class="form-control" required="required">
+			                <input type="text" name="claim_mand_<%=claim%>" id="claim_mand_<%=claim%>" class="form-control"
+                                   required="<%=AuthenticationEndpointUtil.i18n(resourceBundle, "required")%>">
 			            </div>
                             	<%}%>
                         <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 form-group">
@@ -110,8 +110,9 @@
 				<div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 form-group">
                                 <br/>
 		                        <button class="wr-btn grey-bg col-xs-12 col-md-12 col-lg-12 uppercase font-extra-large"
-					    type="submit">Submit
-				    	</button>
+					                    type="submit">
+                                        <%=AuthenticationEndpointUtil.i18n(resourceBundle, "submit")%>
+				    	        </button>
                             	</div>
                             
                             <div class="clearfix"></div>
@@ -127,9 +128,11 @@
     <!-- footer -->
     <footer class="footer">
         <div class="container-fluid">
-            <p>WSO2 Identity Server | &copy;
+            <p><%=AuthenticationEndpointUtil.i18n(resourceBundle, "wso2.identity.server")%> | &copy;
                 <script>document.write(new Date().getFullYear());</script>
-                <a href="http://wso2.com/" target="_blank"><i class="icon fw fw-wso2"></i> Inc</a>. All Rights Reserved.
+                <a href="http://wso2.com/" target="_blank"><i class="icon fw fw-wso2"></i>
+                    <%=AuthenticationEndpointUtil.i18n(resourceBundle, "inc")%>
+                </a>. <%=AuthenticationEndpointUtil.i18n(resourceBundle, "all.right.reserved")%>
             </p>
         </div>
     </footer>
@@ -169,6 +172,3 @@
 
     </body>
     </html>
-
-
-</fmt:bundle>

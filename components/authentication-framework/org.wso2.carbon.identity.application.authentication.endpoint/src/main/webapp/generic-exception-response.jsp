@@ -18,12 +18,15 @@
 
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ page import="org.owasp.encoder.Encode" %>
+<jsp:directive.include file="localize.jsp"/>
+
 <%
     String stat = request.getParameter("status");
     String statusMessage = request.getParameter("statusMsg");
     if (stat == null || statusMessage == null) {
-        stat = "Authentication Error !";
-        statusMessage = "Something went wrong during the authentication process. Please try signing in again.";
+        stat = AuthenticationEndpointUtil.i18n(resourceBundle, "authentication.error");
+        statusMessage = AuthenticationEndpointUtil.i18n(resourceBundle,
+                "something.went.wrong.during.authentication");
     }
     session.invalidate();
 %>

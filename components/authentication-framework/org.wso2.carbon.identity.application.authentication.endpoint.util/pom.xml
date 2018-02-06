@@ -92,6 +92,11 @@
             <artifactId>org.wso2.carbon.securevault</artifactId>
             <version>${carbon.kernel.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.wso2.orbit.org.owasp.encoder</groupId>
+            <artifactId>encoder</artifactId>
+            <version>${encoder.wso2.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -121,6 +126,7 @@
                             javax.xml.namespace,
                             org.w3c.dom,
                             org.xml.sax,
+                            org.owasp.encoder.*,
                             javax.servlet.*; version="${imp.pkg.version.javax.servlet}",
                             org.apache.axiom.om.util; version="${axiom.osgi.version.range}",
                             org.apache.commons.lang; version="${commons-lang.wso2.osgi.version.range}",

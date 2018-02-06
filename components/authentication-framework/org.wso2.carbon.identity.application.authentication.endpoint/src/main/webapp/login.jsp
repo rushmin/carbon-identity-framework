@@ -25,8 +25,8 @@
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.List" %>
 <%@ page import="org.wso2.carbon.identity.application.authentication.endpoint.util.TenantDataManager" %>
-<%@ page import="java.util.ResourceBundle" %>
 <%@ page import="org.wso2.carbon.identity.core.util.IdentityCoreConstants" %>
+<jsp:directive.include file="localize.jsp"/>
 
 <%!
     private static final String FIDO_AUTHENTICATOR = "FIDOAuthenticator";
@@ -37,9 +37,6 @@
 %><fmt:bundle basename="org.wso2.carbon.identity.application.authentication.endpoint.i18n.Resources">
 
     <%
-        String BUNDLE = "org.wso2.carbon.identity.application.authentication.endpoint.i18n.Resources";
-        ResourceBundle resourceBundle = ResourceBundle.getBundle(BUNDLE, request.getLocale());
-
         request.getSession().invalidate();
         String queryString = request.getQueryString();
         Map<String, String> idpAuthenticatorMapping = null;
@@ -117,7 +114,7 @@
                 <a href="#">
                     <img src="images/logo-inverse.svg" alt="wso2" title="wso2" class="logo">
 
-                    <h1><em>Identity Server</em></h1>
+                    <h1><em><%=AuthenticationEndpointUtil.i18n(resourceBundle, "identity.server")%></em></h1>
                 </a>
             </div>
         </div>
@@ -132,8 +129,8 @@
                 <!-- content -->
                 <div class="container col-xs-10 col-sm-6 col-md-6 col-lg-3 col-centered wr-content wr-login col-centered">
                     <div>
-                        <h2 class="wr-title uppercase blue-bg padding-double white boarder-bottom-blue margin-none">Sign
-                            in </h2>
+                        <h2 class="wr-title uppercase blue-bg padding-double white boarder-bottom-blue
+                        margin-none"><%=AuthenticationEndpointUtil.i18n(resourceBundle, "login")%></h2>
                     </div>
                     <div class="boarder-all ">
                         <div class="clearfix"></div>
@@ -182,7 +179,7 @@
                             %>
                             <div class="form-group">
                                 <% if (hasLocalLoginOptions) { %>
-                                <label class="font-large">Other login options:</label>
+                                <label class="font-large"><%=AuthenticationEndpointUtil.i18n(resourceBundle, "other.login.options")%></label>
                                 <%} %>
                             </div>
                             <div class="form-group">
@@ -204,10 +201,12 @@
                                 <a href="#" data-toggle="popover" data-placement="bottom"
                                    title="Sign in with <%=Encode.forHtmlAttribute(idpName)%>" id="popover" id="icon-<%=iconId%>">
                                     <img class="idp-image" src="images/login-icon.png"
-                                         title="Sign in with <%=Encode.forHtmlAttribute(idpName)%>"/>
+                                         title="<%=AuthenticationEndpointUtil.i18n(resourceBundle, "sign.in.with")%>
+                                         <%=Encode.forHtmlAttribute(idpName)%>"/>
 
                                     <div id="popover-head" class="hide">
-                                        <label class="font-large">Sign in with <%=Encode.forHtmlContent(idpName)%></label>
+                                        <label class="font-large"><%=AuthenticationEndpointUtil.i18n(resourceBundle, "sign.in.with")%>
+                                        <%=Encode.forHtmlContent(idpName)%></label>
                                     </div>
                                     <div id="popover-content" class="hide">
                                         <form class="form-inline">
@@ -217,7 +216,7 @@
                                             </div>
                                             <input type="button" class="btn btn-primary go-btn"
                                                    onClick="javascript: myFunction('<%=idpName%>','<%=idpEntry.getValue()%>','domainName')"
-                                                   value="Go"/>
+                                                   value="<%=AuthenticationEndpointUtil.i18n(resourceBundle, "GO")%>"/>
                                         </form>
 
                                     </div>
@@ -245,7 +244,7 @@
                                 forUriComponent(idpEntry.getKey()))%>',
                                         'IWAAuthenticator')" class="main-link" style="cursor:pointer" id="icon-<%=iconId%>">
                                     <img class="idp-image" src="images/login-icon.png" data-toggle="tooltip"
-                                         data-placement="top" title="Sign in with IWA"/>
+                                         data-placement="top" title="<%=AuthenticationEndpointUtil.i18n(resourceBundle, "sign.in.with")%> IWA"/>
                                 </a>
                                 <label for="icon-<%=iconId%>">IWA</label>
                                 </div>
@@ -258,7 +257,7 @@
                                 forUriComponent(idpEntry.getKey()))%>',
                                         'FIDOAuthenticator')" class="main-link" style="cursor:pointer" id="icon-<%=iconId%>">
                                     <img class="idp-image" src="images/login-icon.png" data-toggle="tooltip"
-                                         data-placement="top" title="Sign in with FIDO"/>
+                                         data-placement="top" title="<%=AuthenticationEndpointUtil.i18n(resourceBundle, "sign.in.with")%> FIDO"/>
                                 </a>
                                 <label for="icon-<%=iconId%>">FIDO</label>
 
@@ -290,9 +289,9 @@
     <!-- footer -->
     <footer class="footer">
         <div class="container-fluid">
-            <p>WSO2 Identity Server | &copy;
+            <p><%=AuthenticationEndpointUtil.i18n(resourceBundle, "wso2.identity.server")%> | &copy;
                 <script>document.write(new Date().getFullYear());</script>
-                <a href="http://wso2.com/" target="_blank"><i class="icon fw fw-wso2"></i> Inc</a>. All Rights Reserved.
+                <a href="http://wso2.com/" target="_blank"><i class="icon fw fw-wso2"></i> Inc</a>. <%=AuthenticationEndpointUtil.i18n(resourceBundle, "all.right.reserved")%>
             </p>
         </div>
     </footer>

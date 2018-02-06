@@ -30,7 +30,6 @@
 <%@ page import="org.wso2.carbon.identity.application.authentication.endpoint.util.bean.ResendCodeRequestDTO" %>
 <%@ page import="org.wso2.carbon.identity.application.authentication.endpoint.util.bean.UserDTO" %>
 
-
 <%
     String resendUsername = request.getParameter("resend_username");
     if (StringUtils.isNotBlank(resendUsername)) {
@@ -94,17 +93,19 @@
     <div class="alert alert-danger" id="error-msg"><%= Encode.forHtml(errorMessage) %>
     </div>
     <%}else if((Boolean.TRUE.toString()).equals(request.getParameter("authz_failure"))){%>
-    <div class="alert alert-danger" id="error-msg">You are not authorized to login
+    <div class="alert alert-danger" id="error-msg">
+        <%=AuthenticationEndpointUtil.i18n(resourceBundle, "unauthorized.to.login")%>
     </div>
     <%}%>
 
     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 form-group">
         <input id="username" name="username" type="text" class="form-control" tabindex="0"
-               placeholder="Username">
+               placeholder="<%=AuthenticationEndpointUtil.i18n(resourceBundle, "username")%>">
     </div>
     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 form-group">
         <input id="password" name="password" type="password" class="form-control"
-               placeholder="Password" autocomplete="off">
+               placeholder="<%=AuthenticationEndpointUtil.i18n(resourceBundle, "password")%>"
+               autocomplete="off">
     </div>
     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 form-group">
         <input type="hidden" name="sessionDataKey" value='<%=Encode.forHtmlAttribute
@@ -124,7 +125,8 @@
     <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12 form-group">
         <div class="checkbox">
             <label>
-                <input type="checkbox" id="chkRemember" name="chkRemember"> Remember me on this computer
+                <input type="checkbox" id="chkRemember" name="chkRemember">
+                <%=AuthenticationEndpointUtil.i18n(resourceBundle, "remember.me")%>
             </label>
         </div>
         <br>
@@ -132,7 +134,8 @@
         <div class="form-actions">
             <button
                     class="wr-btn grey-bg col-xs-12 col-md-12 col-lg-12 uppercase font-extra-large"
-                    type="submit">Sign in
+                    type="submit">
+                    <%=AuthenticationEndpointUtil.i18n(resourceBundle, "login")%>
             </button>
         </div>
     </div>
@@ -164,7 +167,9 @@
                 httpURLConnection.connect();
                 if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
         %>
-        <a id="passwordRecoverLink" href="<%=url%>">Forgot Password </a>
+        <a id="passwordRecoverLink" href="<%=url%>">
+            <%=AuthenticationEndpointUtil.i18n(resourceBundle, "forgot.password")%>
+        </a>
         <br/><br/>
     <%
         }
@@ -176,7 +181,9 @@
         httpURLConnection.connect();
         if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
     %>
-        <a id="usernameRecoverLink" href="<%=url%>">Forgot Username </a>
+        <a id="usernameRecoverLink" href="<%=url%>">
+            <%=AuthenticationEndpointUtil.i18n(resourceBundle, "forgot.username")%>
+        </a>
         <br/><br/>
     <%
         }
@@ -191,16 +198,20 @@
         httpURLConnection.connect();
         if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
         %>
-        Don't have an account?
-        <a id="registerLink" href="<%=url%>">Register Now</a>
+        <%=AuthenticationEndpointUtil.i18n(resourceBundle, "do.not.have.an.account")%>
+        <a id="registerLink" href="<%=url%>">
+            <%=AuthenticationEndpointUtil.i18n(resourceBundle, "register.now")%>
+        </a>
         <%
                 }
             }
         %>
         <br/>
         <% if (Boolean.parseBoolean(loginFailed) && errorCode.equals(IdentityCoreConstants.USER_ACCOUNT_NOT_CONFIRMED_ERROR_CODE) && request.getParameter("resend_username") == null) { %>
-        Not received confirmation email ?
-        <a id="registerLink" href="login.do?resend_username=<%=Encode.forHtml(request.getParameter("failedUsername"))%>&<%=AuthenticationEndpointUtil.cleanErrorMessages(request.getQueryString())%>">Re-Send</a>
+        <%=AuthenticationEndpointUtil.i18n(resourceBundle, "did.not.receive.confirmation.email")%>
+        <a id="registerLink" href="login.do?resend_username=<%=Encode.forHtml(request.getParameter("failedUsername"))%>&<%=AuthenticationEndpointUtil.cleanErrorMessages(request.getQueryString())%>">
+            <%=AuthenticationEndpointUtil.i18n(resourceBundle, "resend")%>
+        </a>
 
         <%}%>
     </div>

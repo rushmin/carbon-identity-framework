@@ -33,7 +33,7 @@ import java.util.ResourceBundle;
 
 /**
  * This class overrides the control of the resource bundle reading
- * code below referenced to Sun's/Oracle's code and changed accordingly to read resource bundle to a given charactor
+ * code below referenced to Sun's/Oracle's code and changed accordingly to read resource bundle to a given character
  * format
  */
 public class EncodedControl extends ResourceBundle.Control {
@@ -70,29 +70,9 @@ public class EncodedControl extends ResourceBundle.Control {
         final String resourceName = toResourceName(bundleName, PROPERTIES);
         final ClassLoader classLoader = loader;
         final boolean reloadFlag = reload;
-        InputStream stream = null;
+        InputStream stream;
         try {
-            stream = AccessController.doPrivileged(
-                    new PrivilegedExceptionAction<InputStream>() {
-                        public InputStream run() throws IOException {
-                            InputStream is = null;
-                            if (reloadFlag) {
-                                URL url = classLoader.getResource(resourceName);
-                                if (url != null) {
-                                    URLConnection connection = url.openConnection();
-                                    if (connection != null) {
-                                        // Disable caches to get fresh data for
-                                        // reloading.
-                                        connection.setUseCaches(false);
-                                        is = connection.getInputStream();
-                                    }
-                                }
-                            } else {
-                                is = classLoader.getResourceAsStream(resourceName);
-                            }
-                            return is;
-                        }
-                    });
+            stream = getStream(resourceName, classLoader, reloadFlag);
         } catch (PrivilegedActionException e) {
             throw (IOException) e.getException();
         }
@@ -109,5 +89,29 @@ public class EncodedControl extends ResourceBundle.Control {
         }
         // and to finish it off
         return bundle;
+    }
+
+    private InputStream getStream(final String resourceName, final ClassLoader classLoader, final boolean reloadFlag) throws PrivilegedActionException, IOException {
+        return AccessController.doPrivileged(
+                new PrivilegedExceptionAction<InputStream>() {
+                    public InputStream run() throws IOException {
+                        InputStream is = null;
+                        if (reloadFlag) {
+                            URL url = classLoader.getResource(resourceName);
+                            if (url != null) {
+                                URLConnection connection = url.openConnection();
+                                if (connection != null) {
+                                    // Disable caches to get fresh data for
+                                    // reloading.
+                                    connection.setUseCaches(false);
+                                    is = connection.getInputStream();
+                                }
+                            }
+                        } else {
+                            is = classLoader.getResourceAsStream(resourceName);
+                        }
+                        return is;
+                    }
+                });
     }
 }

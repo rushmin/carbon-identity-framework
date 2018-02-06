@@ -136,6 +136,8 @@ public class AuthenticationEndpointUtil {
             return Encode.forHtml((StringUtils.isNotBlank(resourceBundle.getString(key)) ?
                     resourceBundle.getString(key) : key));
         } catch (Exception e) {
+            // Intentionally catching Exception and if something goes wrong while finding the value for key, return
+            // default, not to break the UI
             return Encode.forHtml(key);
         }
     }
@@ -155,6 +157,8 @@ public class AuthenticationEndpointUtil {
             return Encode.forHtml((StringUtils.isNotBlank(resourceBundle.getString(base64Key)) ?
                     resourceBundle.getString(base64Key) : key));
         } catch (Exception e) {
+            // Intentionally catching Exception and if something goes wrong while finding the value for key, return
+            // default, not to break the UI
             return Encode.forHtml(key);
         }
     }

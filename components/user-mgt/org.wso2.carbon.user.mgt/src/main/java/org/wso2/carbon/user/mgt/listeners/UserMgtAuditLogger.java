@@ -18,24 +18,28 @@
 
 package org.wso2.carbon.user.mgt.listeners;
 
-import org.apache.commons.logging.Log;
 import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.core.AbstractIdentityUserOperationEventListener;
 import org.wso2.carbon.user.api.Permission;
 import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
+import org.wso2.carbon.user.core.util.UserOperationsAuditLogger;
 
 import java.util.Arrays;
 import java.util.Map;
 
+import static org.wso2.carbon.user.core.util.UserOperationsAuditLogger.ActionResult.SUCCESS;
+import static org.wso2.carbon.user.core.util.UserOperationsAuditLogger.USER_OPERATION_ADD_ROLE;
+import static org.wso2.carbon.user.core.util.UserOperationsAuditLogger.USER_OPERATION_ADD_USER;
+import static org.wso2.carbon.user.core.util.UserOperationsAuditLogger.USER_OPERATION_CHANGE_PASSWORD_BY_ADMINISTRATOR;
+import static org.wso2.carbon.user.core.util.UserOperationsAuditLogger.USER_OPERATION_CHANGE_PASSWORD_BY_USER;
+import static org.wso2.carbon.user.core.util.UserOperationsAuditLogger.USER_OPERATION_DELETE_ROLE;
+import static org.wso2.carbon.user.core.util.UserOperationsAuditLogger.USER_OPERATION_DELETE_USER;
+import static org.wso2.carbon.user.core.util.UserOperationsAuditLogger.USER_OPERATION_UPDATE_ROLE_NAME;
+import static org.wso2.carbon.user.core.util.UserOperationsAuditLogger.USER_OPERATION_UPDATE_USERS_OF_ROLE;
+
 public class UserMgtAuditLogger extends AbstractIdentityUserOperationEventListener {
-
-
-    private static final Log audit = CarbonConstants.AUDIT_LOG;
-    private static final String SUCCESS = "Success";
-
-    private static String AUDIT_MESSAGE = "Initiator : %s | Action : %s | Target : %s | Data : { %s } | Result : %s ";
 
     public boolean doPostAddUser(String userName, Object credential, String[] roleList, Map<String, String> claims,
                                  String profile, UserStoreManager userStoreManager) throws UserStoreException {
@@ -50,8 +54,8 @@ public class UserMgtAuditLogger extends AbstractIdentityUserOperationEventListen
                 builder.append(roleList[i] + ",");
             }
         }
-        audit.info(String.format(AUDIT_MESSAGE, getUser(), "Add User", userName, "Roles :"
-                + builder.toString(), SUCCESS));
+
+        UserOperationsAuditLogger.log(USER_OPERATION_ADD_USER, userName, "Roles :" + builder.toString(), SUCCESS);
         return true;
     }
 
@@ -61,8 +65,7 @@ public class UserMgtAuditLogger extends AbstractIdentityUserOperationEventListen
             return true;
         }
 
-        audit.info(String.format(AUDIT_MESSAGE, getUser(), "Delete User",
-                userName, "", SUCCESS));
+        UserOperationsAuditLogger.log(USER_OPERATION_DELETE_USER, userName, "", SUCCESS);
         return true;
     }
 
@@ -73,8 +76,7 @@ public class UserMgtAuditLogger extends AbstractIdentityUserOperationEventListen
             return true;
         }
 
-        audit.info(String.format(AUDIT_MESSAGE, getUser(), "Change Password by User",
-                userName, "", SUCCESS));
+        UserOperationsAuditLogger.log(USER_OPERATION_CHANGE_PASSWORD_BY_USER, userName, "", SUCCESS);
         return true;
     }
 
@@ -85,8 +87,7 @@ public class UserMgtAuditLogger extends AbstractIdentityUserOperationEventListen
             return true;
         }
 
-        audit.info(String.format(AUDIT_MESSAGE, getUser(), "Change Password by Administrator",
-                userName, "", SUCCESS));
+        UserOperationsAuditLogger.log(USER_OPERATION_CHANGE_PASSWORD_BY_ADMINISTRATOR, userName, "", SUCCESS);
         return true;
     }
 
@@ -96,8 +97,7 @@ public class UserMgtAuditLogger extends AbstractIdentityUserOperationEventListen
             return true;
         }
 
-        audit.info(String.format(AUDIT_MESSAGE, getUser(), "Delete Role", roleName, "",
-                SUCCESS));
+        UserOperationsAuditLogger.log(USER_OPERATION_DELETE_ROLE, roleName, "", SUCCESS);
         return true;
     }
 
@@ -108,8 +108,9 @@ public class UserMgtAuditLogger extends AbstractIdentityUserOperationEventListen
             return true;
         }
 
-        audit.info(String.format(AUDIT_MESSAGE, getUser(), "Add Role", roleName, "Users : "
-                + Arrays.toString(userList) + " Permissions : " + Arrays.toString(permissions), SUCCESS));
+        UserOperationsAuditLogger.log(USER_OPERATION_ADD_ROLE, roleName,
+                "Users : " + Arrays.toString(userList) + " Permissions : " + Arrays.toString(permissions),
+                SUCCESS);
         return true;
     }
 
@@ -120,8 +121,8 @@ public class UserMgtAuditLogger extends AbstractIdentityUserOperationEventListen
             return true;
         }
 
-        audit.info(String.format(AUDIT_MESSAGE, getUser(), "Update Role Name", roleName,
-                "Old : " + roleName + " New : " + newRoleName, SUCCESS));
+        UserOperationsAuditLogger.log(USER_OPERATION_UPDATE_ROLE_NAME, roleName,
+                "Old : " + roleName + " New : " + newRoleName, SUCCESS);
         return true;
     }
 
@@ -132,30 +133,15 @@ public class UserMgtAuditLogger extends AbstractIdentityUserOperationEventListen
             return true;
         }
 
-        audit.info(String.format(AUDIT_MESSAGE, getUser(), "Update Users of Role", roleName,
-                "Users : " + Arrays.toString(newUsers), SUCCESS));
+        UserOperationsAuditLogger.log(USER_OPERATION_UPDATE_USERS_OF_ROLE, roleName,
+                "Users : " + Arrays.toString(newUsers), SUCCESS);
         return true;
     }
 
     public boolean doPostUpdateRoleListOfUser(String userName, String[] deletedRoles, String[] newRoles,
                                               UserStoreManager userStoreManager) throws UserStoreException {
-
-        if(!isEnable()) {
-            return true;
-        }
-
-        audit.info(String.format(AUDIT_MESSAGE, getUser(), "Update Roles of User", userName,
-                "Roles : " + Arrays.toString(newRoles), SUCCESS));
+        // We can't log the event here due to incomplete context data. It is logged by the user core.
+        // This change was done as a part of fixing https://github.com/wso2/product-apim/issues/2678
         return true;
-    }
-
-    private String getUser() {
-        String user = CarbonContext.getThreadLocalCarbonContext().getUsername();
-        if (user != null) {
-            user = user + "@" + CarbonContext.getThreadLocalCarbonContext().getTenantDomain();
-        } else {
-            user = CarbonConstants.REGISTRY_SYSTEM_USERNAME;
-        }
-        return user;
     }
 }

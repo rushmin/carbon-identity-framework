@@ -252,6 +252,13 @@
             </dependency>
 
             <dependency>
+                <groupId>org.wso2.carbon.crypto</groupId>
+                <artifactId>org.wso2.carbon.crypto.api</artifactId>
+                <version>${version.carbon.crypto.api}</version>
+            </dependency>
+
+
+            <dependency>
                 <groupId>org.wso2.orbit.org.apache.neethi</groupId>
                 <artifactId>neethi</artifactId>
                 <version>${neethi.osgi.version}</version>
@@ -1526,6 +1533,8 @@
         <!-- Servlet API -->
         <exp.pkg.version.javax.servlet>2.6.0</exp.pkg.version.javax.servlet>
         <imp.pkg.version.javax.servlet>[2.6.0, 3.0.0)</imp.pkg.version.javax.servlet>
+
+        <version.carbon.crypto.api>1.0.0-SNAPSHOT</version.carbon.crypto.api>
 
         <!-- Misc -->
         <google.guava.wso2.version>12.0.0.wso2v1</google.guava.wso2.version>
